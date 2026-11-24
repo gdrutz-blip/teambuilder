@@ -1,0 +1,1199 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Privacy: this policy blocks ALL network requests. Nothing leaves this page. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; form-action 'none'; base-uri 'none'">
+<title>Gym Team Maker</title>
+<style>
+:root{
+  --bg:#f4f6f9;--card:#ffffff;--ink:#14171c;--muted:#5a6270;--line:#d9dee6;
+  --accent:#1f56d6;--accent-ink:#ffffff;--soft:#e8effd;--sel:#ffe27a;--sel-ink:#14171c;
+  --warn:#9a4a00;--warn-bg:#fff4e0;--bad:#b42318;--ok:#17723a;--ok-bg:#e6f6ec;
+  --absent:#e9ecf1;--absent-ink:#8a919c;--boy:#1f56d6;--girl:#b0287a;--shadow:0 1px 2px rgba(0,0,0,.06),0 2px 8px rgba(0,0,0,.05);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#111418;--card:#1b1f25;--ink:#eef1f5;--muted:#a3abb7;--line:#30363f;
+    --accent:#5b8cff;--accent-ink:#0b1020;--soft:#1f2a44;--sel:#ffd84d;--sel-ink:#111;
+    --warn:#ffb65c;--warn-bg:#3a2a12;--bad:#ff7a6e;--ok:#5fd68a;--ok-bg:#15301f;
+    --absent:#22272e;--absent-ink:#6c7380;--boy:#7aa2ff;--girl:#ff7ac4;--shadow:none;
+  }
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+button,select,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+header{position:sticky;top:0;z-index:20;background:var(--card);border-bottom:1px solid var(--line)}
+.hwrap{max-width:1400px;margin:0 auto;padding:8px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.brand{font-weight:800;font-size:20px;margin-right:auto}
+nav{display:flex;gap:4px}
+nav button{border:0;background:none;padding:10px 14px;border-radius:10px;min-height:44px;font-weight:600;color:var(--muted)}
+nav button.on{background:var(--soft);color:var(--accent)}
+main{max-width:1400px;margin:0 auto;padding:16px 16px 120px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:14px;box-shadow:var(--shadow)}
+.card h2{font-size:19px;margin:0}
+.card h3{font-size:17px;margin:14px 0 8px}
+.cardhead{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+.hint{color:var(--muted);font-size:15px;margin:4px 0 10px}
+.muted{color:var(--muted);font-weight:500}
+.row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:6px 0}
+.lbl{min-width:64px;font-weight:700}
+.seg{display:inline-flex;flex-wrap:wrap;gap:6px}
+.seg button{min-width:52px;min-height:48px;padding:6px 14px;border:1.5px solid var(--line);background:var(--card);border-radius:10px;font-weight:700}
+.seg button.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.seg button small{font-weight:500;opacity:.75}
+.seg.sm button{min-width:40px;min-height:40px;padding:4px 10px}
+select,input[type=text],textarea{border:1.5px solid var(--line);background:var(--card);border-radius:10px;padding:10px 12px;min-height:48px}
+select{min-width:220px;max-width:100%}
+textarea{width:100%;min-height:130px;font-family:inherit}
+.btn{min-height:48px;padding:8px 16px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);font-weight:700}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.danger{color:var(--bad);border-color:var(--bad)}
+.btn-s{min-height:40px;padding:6px 12px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);font-weight:600;font-size:15px}
+.btn-big{display:block;width:100%;min-height:64px;font-size:21px;font-weight:800;border:0;border-radius:14px;background:var(--accent);color:var(--accent-ink);margin:4px 0 18px;box-shadow:var(--shadow)}
+.btn-big:disabled{opacity:.45;cursor:not-allowed}
+.link{border:0;background:none;color:var(--accent);text-decoration:underline;padding:4px;font-size:14px}
+.attgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.att{min-height:52px;padding:8px 10px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);text-align:left;font-weight:600;line-height:1.2}
+.att.absent{background:var(--absent);color:var(--absent-ink);text-decoration:line-through;border-style:dashed}
+.att .tagx{display:block;font-size:12px;font-weight:600;text-decoration:none;color:var(--bad)}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 10px}
+.toggles{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;align-items:center}
+.tog{min-height:40px;padding:6px 12px;border-radius:999px;border:1.5px solid var(--line);background:var(--card);font-size:15px;font-weight:600;color:var(--muted)}
+.tog[aria-pressed="true"]{background:var(--soft);border-color:var(--accent);color:var(--accent)}
+.restitle{font-size:22px;margin:4px 0 6px}
+.teams{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+.team{background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:10px 10px 8px;box-shadow:var(--shadow);display:flex;flex-direction:column}
+.team.drop-target{border-color:var(--accent);outline:3px solid var(--soft)}
+.thead{border-bottom:1px solid var(--line);padding:2px 4px 8px;margin-bottom:6px}
+.thead h3{margin:0;font-size:24px;font-weight:800}
+.tmeta{display:flex;flex-wrap:wrap;gap:4px 12px;color:var(--muted);font-size:15px;font-weight:600}
+.tmeta .str{color:var(--ink)}
+.movehere{margin-top:6px;width:100%;min-height:44px;border-radius:10px;border:2px dashed var(--accent);background:var(--soft);color:var(--accent);font-weight:800}
+.plist{list-style:none;margin:0;padding:0;flex:1}
+.p{display:flex;align-items:center;gap:8px;min-height:46px;padding:6px 8px;margin:3px 0;border-radius:10px;border:1px solid transparent;font-size:19px;font-weight:600;cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+.p:hover{background:var(--soft)}
+.p.sel{background:var(--sel);color:var(--sel-ink);border-color:#c9a400}
+.p.dragging{opacity:.35}
+.p.drop-target{outline:3px solid var(--accent)}
+.p.ghost{position:fixed;z-index:100;pointer-events:none;background:var(--card);border:1.5px solid var(--accent);box-shadow:0 6px 20px rgba(0,0,0,.25);transform:translate(-50%,-50%)}
+.pn{flex:1;min-width:0;overflow-wrap:anywhere}
+.badges{display:flex;gap:4px;align-items:center;flex-shrink:0}
+.sv{min-width:26px;text-align:center;font-size:14px;font-weight:800;background:var(--soft);color:var(--accent);border-radius:6px;padding:2px 5px}
+.g{font-size:12px;font-weight:800;border-radius:6px;padding:2px 5px;border:1.5px solid}
+.g1{color:var(--boy);border-color:var(--boy)}.g2{color:var(--girl);border-color:var(--girl)}
+.lock{font-size:15px}
+.tfoot{display:flex;justify-content:flex-end;padding-top:6px}
+.report{margin-top:14px}
+.okline{background:var(--ok-bg);color:var(--ok);font-weight:700;border-radius:10px;padding:10px 12px;display:inline-block}
+.warnbox{background:var(--warn-bg);color:var(--warn);border-radius:10px;padding:10px 12px;margin-top:8px}
+.warnbox ul{margin:4px 0 0;padding-left:20px}
+table.sched{border-collapse:collapse;width:100%;max-width:720px;font-size:17px}
+table.sched th,table.sched td{border:1px solid var(--line);padding:8px 10px;text-align:left}
+table.sched th{background:var(--soft)}
+.srow{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line)}
+.srow:last-child{border-bottom:0}
+.sname{flex:1 1 260px;min-width:0}
+.small{font-size:14px;color:var(--muted)}
+.note{font-size:14px;color:var(--warn)}
+.tag{display:inline-block;font-size:12px;font-weight:700;color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:1px 6px;margin-left:6px;vertical-align:middle}
+.sctl{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.stepper{display:inline-flex;align-items:center;gap:4px}
+.stepper button{width:40px;height:40px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);font-weight:800;font-size:20px}
+.stepper .v{min-width:34px;text-align:center;font-weight:800;font-size:18px}
+.stepper .v.ovr{color:var(--accent)}
+.stepper .v.guess{color:var(--muted);font-style:italic}
+.icon{width:40px;height:40px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);font-weight:800}
+.icon.danger{color:var(--bad)}
+.pairs{list-style:none;padding:0;margin:6px 0}
+.pairs li{display:flex;align-items:center;gap:8px;padding:4px 0}
+.inline{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.inline select{min-width:160px;flex:1}
+#actionbar{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--card);border-top:2px solid var(--accent);padding:10px 16px calc(10px + env(safe-area-inset-bottom));box-shadow:0 -4px 16px rgba(0,0,0,.12);display:none}
+#actionbar.show{display:block}
+#actionbar .abw{max-width:1400px;margin:0 auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+#actionbar .who{font-weight:800;font-size:18px;margin-right:auto}
+#actionbar .who small{display:block;font-weight:500;font-size:14px;color:var(--muted)}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#14171c;color:#fff;padding:12px 18px;border-radius:12px;font-weight:600;z-index:200;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw;text-align:center}
+#toast.show{opacity:1}
+body.has-sel #toast{bottom:110px}
+dialog{border:0;border-radius:16px;padding:0;max-width:560px;width:calc(100% - 24px);background:var(--card);color:var(--ink)}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+.dlg{padding:16px}
+.dlg h2{margin:0 0 8px;font-size:20px}
+.pickgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin:8px 0 12px;max-height:40vh;overflow:auto}
+.empty{text-align:center;padding:30px 10px}
+.empty p{color:var(--muted)}
+.print-only{display:none}
+.exitpresent{display:none}
+.report-list{margin:4px 0;padding-left:20px}
+.kbd{font-family:ui-monospace,monospace;font-size:14px;background:var(--soft);padding:1px 5px;border-radius:5px}
+/* Projector mode */
+body.present header, body.present .setup, body.present #attCard, body.present .btn-big, body.present .toolbar, body.present .tfoot, body.present #tab-students, body.present #tab-data, body.present .toggles{display:none!important}
+body.present main{max-width:none;padding:16px 24px 40px}
+body.present .restitle{font-size:34px;text-align:center}
+body.present .thead h3{font-size:34px}
+body.present .tmeta{font-size:20px}
+body.present .p{font-size:28px;min-height:52px}
+body.present .exitpresent{display:block;position:fixed;top:10px;right:10px;z-index:50;opacity:.5}
+body.present .exitpresent:hover{opacity:1}
+@media (max-width:520px){
+  body{font-size:16px}
+  .lbl{min-width:100%}
+  .seg button{min-width:48px}
+  .teams{grid-template-columns:1fr}
+}
+@media print{
+  @page{margin:10mm}
+  :root{--ink:#000;--muted:#333;--line:#999;--card:#fff;--bg:#fff;--soft:#eee;--accent:#000}
+  body{background:#fff;color:#000;font-size:11pt}
+  header,.no-print,.setup,#attCard,.btn-big,.toolbar,.toggles,#actionbar,#toast,#tab-students,#tab-data,.exitpresent,dialog{display:none!important}
+  main{padding:0;max-width:none}
+  .print-only{display:block}
+  .print-inline{display:inline!important}
+  .tfoot,.hint{display:none!important}
+  .restitle{font-size:16pt;margin:0 0 6px}
+  .teams{grid-template-columns:repeat(var(--pcols,3),1fr)!important;gap:6px}
+  .team{break-inside:avoid;box-shadow:none;border:1px solid #888;padding:6px}
+  .thead{padding:0 2px 3px;margin-bottom:2px}
+  .thead h3{font-size:13pt}
+  .tmeta{font-size:9pt;color:#333}
+  .p{font-size:11pt;min-height:0;padding:0 4px;line-height:1.3;margin:0;background:none!important;border:0!important;color:#000!important}
+  .sv,.g{font-size:8pt;padding:0 3px;border:1px solid #666;color:#000;background:none}
+  .lock{display:none}
+  .report{margin-top:8px;font-size:9.5pt;break-inside:avoid}
+  .okline,.warnbox{background:none;color:#000;padding:2px 0}
+  table.sched{font-size:10.5pt;max-width:none}
+  table.sched th,table.sched td{padding:3px 6px}
+  .sched-wrap{break-inside:avoid;margin-top:8px}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="hwrap">
+    <div class="brand">🏀 Gym Teams</div>
+    <nav id="nav">
+      <button data-act="tab" data-v="teams">Teams</button>
+      <button data-act="tab" data-v="students">Students &amp; rules</button>
+      <button data-act="tab" data-v="data">Data</button>
+    </nav>
+  </div>
+</header>
+<main>
+  <section id="tab-teams"></section>
+  <section id="tab-students"></section>
+  <section id="tab-data"></section>
+</main>
+<button class="btn exitpresent" data-act="present">✕ Exit projector view</button>
+<div id="actionbar" class="no-print"></div>
+<div id="toast" role="status" aria-live="polite"></div>
+<dialog id="dlg"></dialog>
+
+<script>
+'use strict';
+/* ==========================================================================
+   Gym Team Maker — single offline file. No network access (see CSP above).
+   All data lives in this browser's localStorage under LS_KEY.
+   ========================================================================== */
+const LS_KEY = 'gymTeams.v1';
+const OVERALL = 'Overall (average of all sports)';
+const DEFAULT_SPORTS = ['Basketball','Volleyball','Soccer','Floor Hockey','Badminton','Dodgeball','Ultimate Frisbee','Team Handball','Softball','Track & Field','Flag Football','Kickball','Pickleball','Lacrosse','Tchoukball','Capture the Flag'];
+const SPORT_ALIASES = {
+  'hockey':'Floor Hockey','floorball':'Floor Hockey','floor hockey':'Floor Hockey',
+  'frisbee':'Ultimate Frisbee','ultimate':'Ultimate Frisbee',
+  'handball':'Team Handball','team handball':'Team Handball',
+  'baseball':'Softball','softball baseball':'Softball','softball':'Softball',
+  'track':'Track & Field','track and field':'Track & Field','running':'Track & Field','track field':'Track & Field',
+  'football':'Flag Football','flag football':'Flag Football',
+  'ctf':'Capture the Flag','capture the flag':'Capture the Flag',
+  'table tennis':'Pickleball'
+};
+
+const $ = (s, r = document) => r.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const rnd = n => Math.floor(Math.random() * n);
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=rnd(i+1); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+/* ----------------------------- Storage ---------------------------------- */
+function freshDB(){
+  return {
+    v:1, nextId:1, classes:['8A','8B'], sports:DEFAULT_SPORTS.slice(), students:[],
+    rules:{together:[], apart:[], strength:{}},
+    absent:{}, teams:{}, lastImport:null,
+    ui:{cls:'8A', sport:'Basketball', k:4, showStrength:true, showGender:true, showNotes:true, showSchedule:true, tab:'teams'}
+  };
+}
+let DB, SM = new Map(), sel = null, drag = null, suppressClick = false;
+function load(){
+  let d = null;
+  try { d = JSON.parse(localStorage.getItem(LS_KEY) || 'null'); } catch(e) { d = null; }
+  const f = freshDB();
+  DB = Object.assign(f, d || {});
+  DB.ui = Object.assign(freshDB().ui, (d && d.ui) || {});
+  DB.rules = Object.assign({together:[], apart:[], strength:{}}, (d && d.rules) || {});
+  reindex();
+}
+function save(){
+  try { localStorage.setItem(LS_KEY, JSON.stringify(DB)); }
+  catch(e){ toast('Could not save. Browser storage may be blocked or full.'); }
+}
+function reindex(){ SM = new Map(DB.students.map(s => [s.id, s])); }
+
+/* --------------------------- Name matching ------------------------------ */
+function norm(s){
+  return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase()
+    .replace(/\(.*?\)/g,' ').replace(/['’`.-]/g,'').replace(/[^a-z0-9,\s]/g,' ').replace(/\s+/g,' ').trim();
+}
+function variants(s){
+  const n = norm(s); const out = new Set();
+  out.add(n.replace(/,/g,' ').replace(/\s+/g,' ').trim());
+  if (n.includes(',')) { const i = n.indexOf(','); out.add((n.slice(i+1) + ' ' + n.slice(0,i)).replace(/,/g,' ').replace(/\s+/g,' ').trim()); }
+  return [...out].filter(Boolean);
+}
+const sortKey = s => norm(s).replace(/,/g,' ').split(' ').filter(Boolean).sort().join(' ');
+function lev(a, b){
+  if (a === b) return 0; if (!a.length) return b.length; if (!b.length) return a.length;
+  let prev = Array.from({length:b.length+1}, (_, j) => j), cur = new Array(b.length+1);
+  for (let i = 1; i <= a.length; i++){
+    cur[0] = i;
+    for (let j = 1; j <= b.length; j++) cur[j] = Math.min(prev[j]+1, cur[j-1]+1, prev[j-1] + (a[i-1] === b[j-1] ? 0 : 1));
+    [prev, cur] = [cur, prev];
+  }
+  return prev[b.length];
+}
+const sim = (a, b) => 1 - lev(a, b) / Math.max(a.length, b.length, 1);
+/** Find the student in `cands` that best matches `raw`. canFuzzy(s) limits fuzzy matches. */
+function matchName(raw, cands, canFuzzy = () => true){
+  const rv = variants(raw); if (!rv.length) return null;
+  const rs = sortKey(raw);
+  for (const c of cands){
+    const cv = variants(c.name);
+    if (cv.some(x => rv.includes(x)) || sortKey(c.name) === rs) return {s:c, exact:true};
+  }
+  const fz = cands.filter(canFuzzy);
+  let best = null, bestS = 0, second = 0;
+  for (const c of fz){
+    let sc = sim(rs, sortKey(c.name));
+    for (const a of rv) for (const b of variants(c.name)) sc = Math.max(sc, sim(a, b));
+    if (sc > bestS){ second = bestS; bestS = sc; best = c; } else if (sc > second) second = sc;
+  }
+  if (best && bestS >= 0.8 && (bestS - second >= 0.04 || bestS >= 0.93)) return {s:best, exact:false, score:bestS};
+  // first name only, or "First L"
+  const toks = rv[0].split(' ');
+  if (toks.length === 1 || (toks.length === 2 && toks[1].length === 1)){
+    const hits = fz.filter(c => { const t = variants(c.name)[0].split(' '); return t[0] === toks[0] && (toks.length === 1 || (t[t.length-1] || '').startsWith(toks[1])); });
+    if (hits.length === 1) return {s:hits[0], exact:false, score:0.7};
+  }
+  return null;
+}
+
+/* ------------------------------ CSV ------------------------------------- */
+function parseCSV(text){
+  text = String(text).replace(/^﻿/, '');
+  const firstLine = text.split(/\r?\n/, 1)[0] || '';
+  const delim = (firstLine.split('\t').length > firstLine.split(',').length) ? '\t' : ',';
+  const rows = []; let row = [], f = '', q = false;
+  for (let i = 0; i < text.length; i++){
+    const c = text[i];
+    if (q){
+      if (c === '"'){ if (text[i+1] === '"'){ f += '"'; i++; } else q = false; }
+      else f += c;
+    } else if (c === '"' && f === '') q = true;
+    else if (c === delim){ row.push(f); f = ''; }
+    else if (c === '\n' || c === '\r'){ if (c === '\r' && text[i+1] === '\n') i++; row.push(f); rows.push(row); row = []; f = ''; }
+    else f += c;
+  }
+  if (f !== '' || row.length){ row.push(f); rows.push(row); }
+  return rows.filter(r => r.some(x => x.trim() !== ''));
+}
+function canonSport(label, strict){
+  const n = norm(label).replace(/&/g,'and').replace(/,/g,' ').replace(/\s+/g,' ').trim();
+  if (!n) return null;
+  const known = [...new Set(DB.sports.concat(DEFAULT_SPORTS))];
+  for (const sp of known) if (norm(sp).replace(/&/g,'and') === n || norm(sp) === n) return sp;
+  if (SPORT_ALIASES[n]) return SPORT_ALIASES[n];
+  for (const [a, sp] of Object.entries(SPORT_ALIASES)) if (n.split(' ').includes(a) && a.length > 4) return sp;
+  if (strict) return null;
+  for (const sp of known) if (sim(norm(sp), n) >= 0.8) return sp;
+  return label.trim().replace(/\s+/g,' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+function mapHeaders(hdr){
+  const H = {ts:-1, cls:-1, name:[], first:-1, last:-1, gender:-1, notes:[], friends:[], avoid:[], sports:[]};
+  const isAvoid = h => /\bnot\b|avoid|apart|don'?t|do not|rather not be/.test(h) && /team|with|play|be/.test(h);
+  hdr.forEach((raw, i) => {
+    const h = String(raw).toLowerCase().trim();
+    if (!h) return;
+    const br = h.match(/\[(.+?)\]\s*$/);
+    if (/timestamp|submitted at|submission time/.test(h)){ if (H.ts < 0) H.ts = i; return; }
+    if (/e-?mail|^score$|total score/.test(h)) return;
+    if (br){
+      const q = h.slice(0, br.index);
+      if (isAvoid(q)) H.avoid.push(i);
+      else if (/friend|teammate/.test(q)) H.friends.push(i);
+      else { const sp = canonSport(raw.match(/\[(.+?)\]\s*$/)[1], false); if (sp) H.sports.push({col:i, sport:sp}); }
+      return;
+    }
+    if (isAvoid(h)){ H.avoid.push(i); return; }
+    if (/friend|teammate|like to play with|want on your team/.test(h)){ H.friends.push(i); return; }
+    if (/first name/.test(h)){ H.first = i; return; }
+    if (/last name|surname|family name/.test(h)){ H.last = i; return; }
+    if (/\bname\b|student/.test(h)){ H.name.push(i); return; }
+    if (/^\s*(class|homeroom|section|period|grade)\b|which class/.test(h)){ if (H.cls < 0) H.cls = i; return; }
+    if (/gender|boy or girl|\bsex\b/.test(h)){ H.gender = i; return; }
+    if (/note|comment|anything else|tell (me|us)|other info|injur/.test(h)){ H.notes.push(i); return; }
+    const sp = canonSport(raw, true); if (sp) H.sports.push({col:i, sport:sp});
+  });
+  if (!H.name.length && H.first < 0){ // last resort: a column literally called "name"-ish
+    hdr.forEach((raw, i) => { if (/who are you|your name/.test(String(raw).toLowerCase())) H.name.push(i); });
+  }
+  return H;
+}
+function parseRating(v){
+  v = String(v || '').trim().toLowerCase();
+  if (!v) return undefined;
+  if (/rather|not play|n\/a|^no$|skip|don'?t/.test(v)) return 0;
+  const m = v.match(/[1-5]/); return m ? +m[0] : undefined;
+}
+function parseGender(v){
+  v = String(v || '').trim().toLowerCase();
+  if (/^(b|boy|m|male|man)\b/.test(v)) return 'b';
+  if (/^(g|girl|f|female|woman)\b/.test(v)) return 'g';
+  return '';
+}
+function normCls(v){
+  v = String(v || '').trim(); if (!v) return '';
+  const m = v.match(/(\d+)\s*[-\s]?\s*([a-z])\b/i);
+  if (m) return m[1] + m[2].toUpperCase();
+  return v.toUpperCase().replace(/\s+/g, '');
+}
+function splitNames(cell){
+  cell = String(cell || '').trim(); if (!cell) return [];
+  const commaNames = DB.students.some(s => s.name.includes(','));
+  const out = [];
+  cell.split(/[;\n]/).forEach(part => {
+    const bits = part.split(',').map(x => x.trim()).filter(Boolean);
+    if (commaNames && bits.length >= 2){ for (let i = 0; i < bits.length; i += 2) out.push(bits.slice(i, i+2).join(', ')); }
+    else bits.forEach(b => out.push(b));
+  });
+  return out.filter(x => !/^(none|no|n\/a|nobody|-)$/i.test(x));
+}
+function newStudent(name, cls){
+  if (!DB.classes.includes(cls)) DB.classes.push(cls);
+  const s = {id:'s' + (DB.nextId++), name:name.trim(), cls, gender:'', genderT:null, ratings:{}, friendsRaw:[], avoidRaw:[], friends:[], avoid:[], notes:'', responded:false, fromRoster:false};
+  DB.students.push(s); SM.set(s.id, s); return s;
+}
+function importCSV(text, fallbackCls){
+  const rows = parseCSV(text);
+  if (rows.length < 2) throw new Error('That file has no response rows.');
+  const H = mapHeaders(rows[0]);
+  if (!H.name.length && H.first < 0) throw new Error('Couldn’t find a name column. One header must contain the word “name”.');
+  const rep = {rows:0, added:[], updated:0, dupes:0, fuzzy:[], skipped:0, unmatched:[], sports:[...new Set(H.sports.map(x => x.sport))], friendCols:H.friends.length, at:Date.now(), noClass:0};
+  H.sports.forEach(x => { if (!DB.sports.includes(x.sport)) DB.sports.push(x.sport); });
+  const recs = [];
+  rows.slice(1).forEach((r, ri) => {
+    const get = c => (c >= 0 && c < r.length) ? String(r[c]).trim() : '';
+    let name = ''; for (const c of H.name){ name = get(c); if (name) break; }
+    if (!name && H.first >= 0) name = (get(H.first) + ' ' + get(H.last)).trim();
+    if (!name){ rep.skipped++; return; }
+    const ratings = {};
+    H.sports.forEach(x => { const v = parseRating(get(x.col)); if (v !== undefined) ratings[x.sport] = v; });
+    const friends = []; H.friends.forEach(c => splitNames(get(c)).forEach(n => friends.push(n)));
+    const avoid = []; H.avoid.forEach(c => splitNames(get(c)).forEach(n => avoid.push(n)));
+    const tsRaw = get(H.ts);
+    recs.push({row:ri, name, cls:normCls(get(H.cls)), gender:H.gender >= 0 ? parseGender(get(H.gender)) : undefined,
+      ratings, friends, avoid, notes:H.notes.map(get).filter(Boolean).join(' | '), ts:tsRaw ? Date.parse(tsRaw) : NaN});
+  });
+  rep.rows = recs.length;
+  const useTs = recs.length && recs.every(r => !isNaN(r.ts));
+  // Match each response to a student (roster names allow fuzzy matching; response-only names must match exactly)
+  for (const rec of recs){
+    if (!rec.cls){
+      const m = matchName(rec.name, DB.students, s => s.fromRoster);
+      rec.cls = m ? m.s.cls : fallbackCls; rep.noClass++;
+    }
+    if (!DB.classes.includes(rec.cls)) DB.classes.push(rec.cls);
+    const cands = DB.students.filter(s => s.cls === rec.cls);
+    const m = matchName(rec.name, cands, s => s.fromRoster);
+    let s;
+    if (m){ s = m.s; if (!m.exact && !rep.fuzzy.some(f => f[0] === rec.name)) rep.fuzzy.push([rec.name, s.name]); }
+    else { s = newStudent(rec.name, rec.cls); rep.added.push(s.name + ' (' + s.cls + ')'); }
+    rec.sid = s.id;
+  }
+  // Duplicate submissions: latest wins
+  const latest = new Map();
+  for (const rec of recs){
+    const cur = latest.get(rec.sid);
+    const newer = !cur || (useTs ? (rec.ts > cur.ts || (rec.ts === cur.ts && rec.row > cur.row)) : rec.row > cur.row);
+    if (newer) latest.set(rec.sid, rec);
+  }
+  rep.dupes = recs.length - latest.size;
+  const addedIds = new Set(DB.students.filter(s => rep.added.includes(s.name + ' (' + s.cls + ')')).map(s => s.id));
+  for (const [sid, rec] of latest){
+    const s = SM.get(sid);
+    if (rec.gender !== undefined) s.gender = rec.gender;
+    s.ratings = rec.ratings; s.friendsRaw = rec.friends; s.avoidRaw = rec.avoid; s.notes = rec.notes; s.responded = true;
+    if (!addedIds.has(sid)) rep.updated++;
+  }
+  resolveLinks(rep);
+  DB.lastImport = rep;
+  return rep;
+}
+/** Turn typed friend / not-with names into student ids (same class). */
+function resolveLinks(rep){
+  for (const s of DB.students){
+    const cands = DB.students.filter(c => c.cls === s.cls && c.id !== s.id);
+    const res = (raws, kind) => {
+      const ids = [];
+      for (const raw of raws || []){
+        const m = matchName(raw, cands);
+        if (m){ if (!ids.includes(m.s.id)) ids.push(m.s.id); }
+        else if (rep) rep.unmatched.push(`“${raw}” (${kind} of ${s.name})`);
+      }
+      return ids;
+    };
+    s.friends = res(s.friendsRaw, 'friend');
+    s.avoid = res(s.avoidRaw, 'not-with');
+  }
+}
+function saveRoster(cls, text){
+  const names = String(text).split(/\r?\n/).map(x => x.replace(/^\s*\d+[.)]\s*/, '').trim()).filter(Boolean);
+  const used = new Set(); let added = 0; const fixed = [];
+  for (const name of names){
+    const cands = DB.students.filter(s => s.cls === cls && !used.has(s.id));
+    const m = matchName(name, cands);
+    if (m){
+      used.add(m.s.id);
+      if (m.s.name !== name){ fixed.push([m.s.name, name]); m.s.name = name; }
+      m.s.fromRoster = true;
+    } else { const s = newStudent(name, cls); s.fromRoster = true; used.add(s.id); added++; }
+  }
+  resolveLinks(null);
+  return {added, fixed, total:names.length};
+}
+
+/* ------------------------ Strength & helpers ---------------------------- */
+const ratingVal = r => r === 0 ? 1 : r;  // "rather not play" counts as 1
+function avgRating(s){
+  const v = Object.values(s.ratings || {}).filter(x => typeof x === 'number').map(ratingVal);
+  return v.length ? Math.round(v.reduce((a, b) => a + b, 0) / v.length) : 3;
+}
+function hasRating(s, sport){ return sport === OVERALL ? Object.keys(s.ratings || {}).length > 0 : typeof (s.ratings || {})[sport] === 'number'; }
+function autoStrength(s, sport){
+  if (sport === OVERALL) return avgRating(s);
+  const r = (s.ratings || {})[sport];
+  return typeof r === 'number' ? ratingVal(r) : avgRating(s);
+}
+function overrideOf(s, sport){ const o = DB.rules.strength[s.id]; return o && o[sport] != null ? o[sport] : null; }
+function strengthOf(s, sport){ const o = overrideOf(s, sport); return o != null ? o : autoStrength(s, sport); }
+function genderOf(s){ return s.genderT != null ? s.genderT : (s.gender || ''); }
+function gNum(s){ const g = genderOf(s); return g === 'b' ? 1 : g === 'g' ? 2 : 0; }
+function classStudents(cls = DB.ui.cls){ return DB.students.filter(s => s.cls === cls).sort((a, b) => a.name.localeCompare(b.name)); }
+function absentSet(cls = DB.ui.cls){ return new Set(DB.absent[cls] || []); }
+function setAbsentFlag(id, flag, cls = DB.ui.cls){
+  const set = absentSet(cls); flag ? set.add(id) : set.delete(id); DB.absent[cls] = [...set];
+}
+function teamsState(cls = DB.ui.cls){ return DB.teams[cls] || null; }
+function teamIndexOf(id, st = teamsState()){ if (!st) return -1; return st.teams.findIndex(t => t.includes(id)); }
+const nameOf = id => (SM.get(id) || {name:'?'}).name;
+const byName = (a, b) => nameOf(a).localeCompare(nameOf(b));
+
+/* ----------------------------- Optimizer -------------------------------- */
+/* Costs are weighted to follow the priority order:
+   sizes (hard) > teacher lock-together / keep-apart (5000) > min 2 boys & 2 girls (1000)
+   > even boy/girl spread (300) > strength spread (12 × range²) > friend missed (20)
+   > student "not with" (50) > top-player spread (8). Small strength give is allowed for friends. */
+function buildModel(ids, k, sport){
+  const n = ids.length, ix = new Map(ids.map((id, i) => [id, i]));
+  const P = ids.map(id => SM.get(id));
+  const str = P.map(s => strengthOf(s, sport));
+  const gen = P.map(gNum);
+  const fr = P.map(s => [...new Set((s.friends || []).map(f => ix.get(f)).filter(x => x !== undefined))]);
+  const pw = new Map();
+  const addPair = (i, j, w) => { if (i === undefined || j === undefined || i === j) return; const key = i < j ? i + ',' + j : j + ',' + i; pw.set(key, (pw.get(key) || 0) + w); };
+  P.forEach((s, i) => (s.avoid || []).forEach(o => addPair(i, ix.get(o), 50)));
+  DB.rules.apart.forEach(([x, y]) => addPair(ix.get(x), ix.get(y), 5000));
+  const apart = [...pw].map(([key, w]) => { const [i, j] = key.split(',').map(Number); return [i, j, w]; });
+  const tog = DB.rules.together.map(([x, y]) => [ix.get(x), ix.get(y)]).filter(([i, j]) => i !== undefined && j !== undefined);
+  let B = 0, G = 0; gen.forEach(g => { if (g === 1) B++; else if (g === 2) G++; });
+  const minB = Math.min(2, Math.floor(B / k)), minG = Math.min(2, Math.floor(G / k));
+  const sorted = str.slice().sort((a, b) => b - a);
+  let thr = sorted[Math.min(k, n) - 1] ?? 99;
+  let isTop = str.map(v => v >= thr);
+  if (isTop.filter(Boolean).length > 2 * k){ isTop = str.map(v => v > thr); }
+  const topN = isTop.filter(Boolean).length, topCap = Math.max(1, Math.ceil(topN / k));
+  const total = str.reduce((a, b) => a + b, 0), mean = total / k;
+  const sum = new Float64Array(k), boys = new Int32Array(k), girls = new Int32Array(k), top = new Int32Array(k);
+  const Bx = B % k ? 1 : 0, Gx = G % k ? 1 : 0;
+  function cost(a){
+    sum.fill(0); boys.fill(0); girls.fill(0); top.fill(0);
+    for (let i = 0; i < n; i++){ const t = a[i]; sum[t] += str[i]; if (gen[i] === 1) boys[t]++; else if (gen[i] === 2) girls[t]++; if (isTop[i]) top[t]++; }
+    let c = 0, mx = -1e9, mn = 1e9, bmx = -1, bmn = 1e9, gmx = -1, gmn = 1e9;
+    for (let t = 0; t < k; t++){
+      if (boys[t] < minB) c += 1000 * (minB - boys[t]);
+      if (girls[t] < minG) c += 1000 * (minG - girls[t]);
+      if (sum[t] > mx) mx = sum[t]; if (sum[t] < mn) mn = sum[t];
+      if (boys[t] > bmx) bmx = boys[t]; if (boys[t] < bmn) bmn = boys[t];
+      if (girls[t] > gmx) gmx = girls[t]; if (girls[t] < gmn) gmn = girls[t];
+      c += Math.abs(sum[t] - mean);
+      if (top[t] > topCap) c += 8 * (top[t] - topCap);
+    }
+    c += 300 * Math.max(0, bmx - bmn - Bx) + 300 * Math.max(0, gmx - gmn - Gx);
+    const r = mx - mn; c += 12 * r * r;
+    for (let i = 0; i < n; i++){
+      const f = fr[i]; if (!f.length) continue;
+      let got = 0; for (let q = 0; q < f.length; q++) if (a[f[q]] === a[i]) got++;
+      c += got ? -Math.min(got, 3) : 20;
+    }
+    for (let q = 0; q < apart.length; q++){ const p = apart[q]; if (a[p[0]] === a[p[1]]) c += p[2]; }
+    for (let q = 0; q < tog.length; q++){ const p = tog[q]; if (a[p[0]] !== a[p[1]]) c += 5000; }
+    return c;
+  }
+  return {n, k, ids, ix, str, gen, cost};
+}
+function teamSizes(n, k, pinCount){
+  const base = Math.floor(n / k), extra = n % k;
+  const order = shuffle([...Array(k).keys()]).sort((a, b) => pinCount[b] - pinCount[a]);
+  const sizes = Array(k).fill(base); for (let i = 0; i < extra; i++) sizes[order[i]]++;
+  for (let t = 0; t < k; t++){
+    while (pinCount[t] > sizes[t]){
+      let u = -1; for (let v = 0; v < k; v++) if (sizes[v] > pinCount[v] && (u < 0 || sizes[v] > sizes[u])) u = v;
+      if (u < 0) break; sizes[u]--; sizes[t]++;
+    }
+  }
+  return sizes;
+}
+const sigOf = teams => teams.map(t => t.slice().sort().join(',')).sort().join('|');
+function optimize(ids, k, sport, pins, prevTeams){
+  const M = buildModel(ids, k, sport), n = M.n;
+  const pinT = new Int32Array(n).fill(-1), pinCount = Array(k).fill(0);
+  for (const [id, t] of Object.entries(pins || {})){ const i = M.ix.get(id); if (i !== undefined && t < k){ pinT[i] = t; pinCount[t]++; } }
+  const movable = []; for (let i = 0; i < n; i++) if (pinT[i] < 0) movable.push(i);
+  const toTeams = a => { const T = Array.from({length:k}, () => []); for (let i = 0; i < n; i++) T[a[i]].push(M.ids[i]); return T.map(t => t.sort(byName)); };
+  const restarts = 24, iters = Math.max(2500, n * 120);
+  const results = [];
+  for (let r = 0; r < restarts; r++){
+    const sizes = teamSizes(n, k, pinCount);
+    const a = new Int32Array(n), fill = sizes.slice();
+    for (let i = 0; i < n; i++) if (pinT[i] >= 0){ a[i] = pinT[i]; fill[pinT[i]]--; }
+    const slots = []; fill.forEach((c, t) => { for (let q = 0; q < c; q++) slots.push(t); });
+    shuffle(slots); movable.forEach((i, q) => { a[i] = slots[q]; });
+    let c = M.cost(a), best = a.slice(), bestC = c;
+    if (movable.length >= 2){
+      let T = 40; const alpha = Math.pow(0.2 / 40, 1 / iters);
+      for (let it = 0; it < iters; it++, T *= alpha){
+        const i = movable[rnd(movable.length)], j = movable[rnd(movable.length)];
+        if (a[i] === a[j]) continue;
+        let tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+        const nc = M.cost(a), d = nc - c;
+        if (d <= 0 || Math.random() < Math.exp(-d / T)){ c = nc; if (c < bestC){ bestC = c; best = a.slice(); } }
+        else { tmp = a[i]; a[i] = a[j]; a[j] = tmp; }
+      }
+      // final hill climb: try every swap until none helps
+      let improved = true;
+      while (improved){
+        improved = false;
+        for (let x = 0; x < movable.length; x++) for (let y = x + 1; y < movable.length; y++){
+          const i = movable[x], j = movable[y]; if (best[i] === best[j]) continue;
+          let tmp = best[i]; best[i] = best[j]; best[j] = tmp;
+          const nc = M.cost(best);
+          if (nc < bestC - 1e-9){ bestC = nc; improved = true; } else { tmp = best[i]; best[i] = best[j]; best[j] = tmp; }
+        }
+      }
+    }
+    results.push({a:best, c:bestC});
+  }
+  results.sort((x, y) => x.c - y.c);
+  const top = results[0].c, good = results.filter(x => x.c <= top + 4);
+  const prevSig = prevTeams ? sigOf(prevTeams) : null;
+  let pool = good.filter(x => sigOf(toTeams(x.a)) !== prevSig); if (!pool.length) pool = good;
+  return toTeams(pool[rnd(pool.length)].a);
+}
+
+/* ---------------------------- Evaluation -------------------------------- */
+function evaluate(st, sport){
+  const teams = st.teams, all = teams.flat(), here = new Set(all), teamOf = new Map();
+  teams.forEach((t, ti) => t.forEach(id => teamOf.set(id, ti)));
+  const info = teams.map(t => {
+    let sum = 0, boys = 0, girls = 0, other = 0;
+    t.forEach(id => { const s = SM.get(id); sum += strengthOf(s, sport); const g = gNum(s); g === 1 ? boys++ : g === 2 ? girls++ : other++; });
+    return {size:t.length, sum, boys, girls, other};
+  });
+  let elig = 0, got = 0; const missed = [], noneHere = [], noReq = [];
+  for (const id of all){
+    const s = SM.get(id), req = s.friends || [];
+    if (!req.length){ noReq.push(id); continue; }
+    const pres = req.filter(f => here.has(f));
+    if (!pres.length){ noneHere.push(id); continue; }
+    elig++;
+    if (pres.some(f => teamOf.get(f) === teamOf.get(id))) got++; else missed.push(id);
+  }
+  const warnings = [];
+  const seen = new Set();
+  for (const id of all){
+    for (const o of SM.get(id).avoid || []){
+      const key = [id, o].sort().join();
+      if (here.has(o) && teamOf.get(o) === teamOf.get(id) && !seen.has(key)){ seen.add(key); warnings.push(`${nameOf(id)} asked not to be with ${nameOf(o)} (Team ${teamOf.get(id)+1})`); }
+    }
+  }
+  DB.rules.apart.forEach(([x, y]) => { if (here.has(x) && here.has(y) && teamOf.get(x) === teamOf.get(y)) warnings.push(`Keep-apart rule broken: ${nameOf(x)} & ${nameOf(y)} (Team ${teamOf.get(x)+1})`); });
+  DB.rules.together.forEach(([x, y]) => { if (here.has(x) && here.has(y) && teamOf.get(x) !== teamOf.get(y)) warnings.push(`Together rule broken: ${nameOf(x)} (Team ${teamOf.get(x)+1}) & ${nameOf(y)} (Team ${teamOf.get(y)+1})`); });
+  const B = info.reduce((a, t) => a + t.boys, 0), G = info.reduce((a, t) => a + t.girls, 0), k = teams.length;
+  const minB = Math.min(2, Math.floor(B / k)), minG = Math.min(2, Math.floor(G / k));
+  info.forEach((t, i) => {
+    if (t.boys < minB) warnings.push(`Team ${i+1} has only ${t.boys} boy${t.boys === 1 ? '' : 's'}`);
+    if (t.girls < minG) warnings.push(`Team ${i+1} has only ${t.girls} girl${t.girls === 1 ? '' : 's'}`);
+  });
+  const sizes = info.map(t => t.size);
+  if (Math.max(...sizes) - Math.min(...sizes) > 1) warnings.push(`Team sizes are uneven (${sizes.join(', ')}). Tap Shuffle to rebalance; locked students stay put.`);
+  const sums = info.map(t => t.sum);
+  return {info, elig, got, missed, noneHere, noReq, warnings, spread:Math.max(...sums) - Math.min(...sums), minSum:Math.min(...sums), maxSum:Math.max(...sums)};
+}
+function roundRobin(k){
+  const list = [...Array(k).keys()].map(i => i + 1); if (k % 2) list.push(0);
+  const m = list.length, rounds = []; let arr = list.slice();
+  for (let r = 0; r < m - 1; r++){
+    const games = [], rest = [];
+    for (let i = 0; i < m / 2; i++){ const a = arr[i], b = arr[m-1-i]; if (a && b) games.push([a, b]); else rest.push(a || b); }
+    rounds.push({games, rest});
+    arr = [arr[0], arr[m-1], ...arr.slice(1, m-1)];
+  }
+  return rounds;
+}
+
+/* ----------------------------- Actions ---------------------------------- */
+function generate(){
+  const cls = DB.ui.cls, k = DB.ui.k, sport = DB.ui.sport;
+  const abs = absentSet();
+  const ids = classStudents().filter(s => !abs.has(s.id)).map(s => s.id);
+  if (ids.length < k){ toast(`Need at least ${k} players for ${k} teams.`); return; }
+  const prev = teamsState(); const pins = {};
+  if (prev){
+    const ps = new Set(prev.pins || []);
+    prev.teams.forEach((t, ti) => t.forEach(id => { if (ps.has(id) && ti < k && ids.includes(id)) pins[id] = ti; }));
+  }
+  const t0 = performance.now();
+  const teams = optimize(ids, k, sport, pins, prev ? prev.teams : null);
+  DB.teams[cls] = {k, teams, pins:Object.keys(pins), at:Date.now()};
+  sel = null; save(); render();
+  const el = $('#results'); if (el && !document.body.classList.contains('present')) el.scrollIntoView({behavior:'smooth', block:'start'});
+  console.log('teams made in', Math.round(performance.now() - t0), 'ms');
+}
+function moveStudent(id, t){
+  const st = teamsState(); const from = teamIndexOf(id, st); if (from < 0 || from === t) return;
+  st.teams[from] = st.teams[from].filter(x => x !== id); st.teams[t].push(id); st.teams[t].sort(byName);
+  save(); render(); toast(`${nameOf(id)} → Team ${t+1}`);
+}
+function swapStudents(a, b){
+  const st = teamsState(); const ta = teamIndexOf(a, st), tb = teamIndexOf(b, st);
+  if (ta < 0 || tb < 0 || ta === tb) return;
+  st.teams[ta] = st.teams[ta].map(x => x === a ? b : x).sort(byName);
+  st.teams[tb] = st.teams[tb].map(x => x === b ? a : x).sort(byName);
+  save(); render(); toast(`Swapped ${nameOf(a)} ⇄ ${nameOf(b)}`);
+}
+function togglePin(id){
+  const st = teamsState(); const ps = new Set(st.pins || []);
+  ps.has(id) ? ps.delete(id) : ps.add(id); st.pins = [...ps]; save(); render();
+}
+function removeFromTeams(id){
+  const st = teamsState(); if (!st) return -1;
+  const t = teamIndexOf(id, st); if (t < 0) return -1;
+  st.teams[t] = st.teams[t].filter(x => x !== id); st.pins = (st.pins || []).filter(x => x !== id);
+  return t;
+}
+/** Place a student into the best team (smallest teams only) or a given team. */
+function placeStudent(id, team){
+  const st = teamsState(); if (!st) return -1;
+  if (teamIndexOf(id, st) >= 0) return teamIndexOf(id, st);
+  let t = team;
+  if (t == null || t < 0){
+    const ids = st.teams.flat().concat(id);
+    const M = buildModel(ids, st.k, DB.ui.sport);
+    const a = new Int32Array(ids.length); st.teams.forEach((tm, ti) => tm.forEach(x => { a[M.ix.get(x)] = ti; }));
+    const minSize = Math.min(...st.teams.map(x => x.length));
+    let bestC = Infinity;
+    st.teams.forEach((tm, ti) => { if (tm.length !== minSize) return; a[ids.length-1] = ti; const c = M.cost(a); if (c < bestC){ bestC = c; t = ti; } });
+  }
+  st.teams[t].push(id); st.teams[t].sort(byName);
+  return t;
+}
+function toggleAttendance(id){
+  const abs = absentSet(); const nowAbsent = !abs.has(id);
+  setAbsentFlag(id, nowAbsent);
+  const st = teamsState();
+  if (st){
+    if (nowAbsent){ const t = removeFromTeams(id); if (t >= 0) toast(`${nameOf(id)} removed from Team ${t+1}`); }
+    else { const t = placeStudent(id); if (t >= 0) toast(`${nameOf(id)} added to Team ${t+1}`); }
+  }
+  if (sel === id) sel = null;
+  save(); render();
+}
+function deleteStudent(id){
+  const s = SM.get(id); if (!s) return;
+  for (const st of Object.values(DB.teams)){ st.teams = st.teams.map(t => t.filter(x => x !== id)); st.pins = (st.pins || []).filter(x => x !== id); }
+  for (const c of Object.keys(DB.absent)) DB.absent[c] = DB.absent[c].filter(x => x !== id);
+  DB.rules.together = DB.rules.together.filter(p => !p.includes(id));
+  DB.rules.apart = DB.rules.apart.filter(p => !p.includes(id));
+  delete DB.rules.strength[id];
+  DB.students = DB.students.filter(x => x.id !== id);
+  DB.students.forEach(x => { x.friends = x.friends.filter(f => f !== id); x.avoid = x.avoid.filter(f => f !== id); });
+  reindex();
+}
+
+/* ------------------------------ Text out -------------------------------- */
+function teamsText(){
+  const st = teamsState(); if (!st) return '';
+  const sport = DB.ui.sport, ev = evaluate(st, sport);
+  const L = [`${DB.ui.cls} · ${sport === OVERALL ? 'Overall' : sport} · ${st.teams.length} teams`, ''];
+  st.teams.forEach((t, ti) => {
+    const inf = ev.info[ti], meta = [];
+    if (DB.ui.showStrength) meta.push('strength ' + inf.sum);
+    if (DB.ui.showGender) meta.push(`${inf.boys}B/${inf.girls}G`);
+    L.push(`Team ${ti+1}` + (meta.length ? ` (${meta.join(', ')})` : ''));
+    t.forEach(id => L.push('  ' + nameOf(id)));
+    L.push('');
+  });
+  if (DB.ui.showSchedule && [3,4,5].includes(st.teams.length)){
+    L.push('Schedule');
+    roundRobin(st.teams.length).forEach((r, i) => {
+      L.push(`Round ${i+1}: ` + r.games.map((g, c) => `Court ${c+1}: T${g[0]} v T${g[1]}`).join(' · ') + (r.rest.length ? ` · Rest: T${r.rest.join(', T')}` : ''));
+    });
+  }
+  return L.join('\n').trim() + '\n';
+}
+async function copyText(){
+  const text = teamsText();
+  try { await navigator.clipboard.writeText(text); toast('Copied teams to clipboard'); return; } catch(e){}
+  const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select(); let ok = false;
+  try { ok = document.execCommand('copy'); } catch(e){}
+  ta.remove();
+  if (ok) toast('Copied teams to clipboard');
+  else openDialog(`<div class="dlg"><h2>Copy these teams</h2><textarea readonly style="min-height:300px">${esc(text)}</textarea><div class="toolbar"><button class="btn primary" data-act="closedlg">Done</button></div></div>`);
+}
+
+/* ------------------------------ Rendering ------------------------------- */
+function render(){
+  document.querySelectorAll('#nav button').forEach(b => b.classList.toggle('on', b.dataset.v === DB.ui.tab));
+  ['teams','students','data'].forEach(t => { $('#tab-' + t).hidden = DB.ui.tab !== t; });
+  if (DB.ui.tab === 'teams') $('#tab-teams').innerHTML = renderTeamsTab();
+  if (DB.ui.tab === 'students') $('#tab-students').innerHTML = renderStudentsTab();
+  if (DB.ui.tab === 'data') $('#tab-data').innerHTML = renderDataTab();
+  renderActionBar();
+}
+function classSeg(){
+  return `<div class="seg">${DB.classes.map(c => `<button data-act="cls" data-v="${esc(c)}" class="${c === DB.ui.cls ? 'on' : ''}">${esc(c)} <small>${DB.students.filter(s => s.cls === c).length}</small></button>`).join('')}</div>`;
+}
+function sportSelect(id){
+  const opts = DB.sports.concat([OVERALL]);
+  if (!opts.includes(DB.ui.sport)) DB.ui.sport = opts[0];
+  return `<select id="${id}" data-chg="sport" aria-label="Sport">${opts.map(s => `<option ${s === DB.ui.sport ? 'selected' : ''}>${esc(s)}</option>`).join('')}</select>`;
+}
+function renderTeamsTab(){
+  if (!DB.students.length){
+    return `<div class="card empty"><h2>No students yet</h2><p>Upload your Google Form CSV (or paste class lists) in the Data and Students tabs, or try it with fake students.</p>
+      <div class="toolbar" style="justify-content:center"><button class="btn primary" data-act="sample">Load sample data (fake names)</button><button class="btn" data-act="tab" data-v="data">Go to Data</button></div></div>`;
+  }
+  const studs = classStudents(), abs = absentSet(), k = DB.ui.k;
+  const present = studs.filter(s => !abs.has(s.id)).length;
+  const st = teamsState();
+  const pinsN = st ? (st.pins || []).filter(id => !abs.has(id) && teamIndexOf(id, st) > -1 && teamIndexOf(id, st) < k).length : 0;
+  const base = Math.floor(present / k), ex = present % k;
+  const sizeTxt = present >= k ? (ex ? `${ex} team${ex > 1 ? 's' : ''} of ${base+1}, ${k-ex} of ${base}` : `${k} teams of ${base}`) : 'not enough players';
+  return `
+  <div class="card setup">
+    <div class="row"><span class="lbl">Class</span>${classSeg()}</div>
+    <div class="row"><label class="lbl" for="sportSel">Sport</label>${sportSelect('sportSel')}</div>
+    <div class="row"><span class="lbl">Teams</span><div class="seg">${[2,3,4,5,6].map(n => `<button data-act="k" data-v="${n}" class="${n === k ? 'on' : ''}">${n}</button>`).join('')}</div></div>
+  </div>
+  <div class="card" id="attCard">
+    <div class="cardhead"><h2>Who’s playing? <span class="muted">${present}/${studs.length}</span></h2>
+      <button class="btn-s" data-act="allhere">Everyone’s here</button></div>
+    <p class="hint">Tap a name to mark absent / not playing. Tap again to bring them back.${st ? ' Teams update right away.' : ''}</p>
+    <div class="attgrid">${studs.map(s => `<button class="att ${abs.has(s.id) ? 'absent' : ''}" data-act="att" data-id="${s.id}" aria-pressed="${abs.has(s.id)}">${esc(s.name)}${abs.has(s.id) ? '<span class="tagx">absent</span>' : ''}</button>`).join('')}</div>
+  </div>
+  <button class="btn-big" data-act="make" ${present < k ? 'disabled' : ''}>Make ${k} teams <span style="font-weight:500;font-size:16px">· ${sizeTxt}${pinsN ? ` · keeping ${pinsN} locked` : ''}</span></button>
+  <div id="results">${renderResults()}</div>`;
+}
+function chip(id, pins){
+  const s = SM.get(id), g = gNum(s), str = strengthOf(s, DB.ui.sport);
+  return `<li class="p ${sel === id ? 'sel' : ''}" data-act="chip" data-id="${id}" tabindex="0" role="button" aria-pressed="${sel === id}">
+    <span class="pn">${esc(s.name)}</span><span class="badges">${pins.has(id) ? '<span class="lock" title="Locked to this team">🔒</span>' : ''}${DB.ui.showGender && g ? `<span class="g g${g}">${g === 1 ? 'B' : 'G'}</span>` : ''}${DB.ui.showStrength ? `<span class="sv" title="Strength">${str}</span>` : ''}</span></li>`;
+}
+function renderResults(){
+  const st = teamsState(); if (!st) return '';
+  const sport = DB.ui.sport, ev = evaluate(st, sport), pins = new Set(st.pins || []);
+  const k = st.teams.length, selTeam = sel ? teamIndexOf(sel, st) : -1;
+  const pcols = k <= 3 ? k : (k === 4 ? 2 : 3);
+  const tg = (key, label) => `<button class="tog" data-act="toggle" data-v="${key}" aria-pressed="${!!DB.ui[key]}">${DB.ui[key] ? '✓ ' : ''}${label}</button>`;
+  const date = new Date().toLocaleDateString(undefined, {weekday:'short', month:'short', day:'numeric'});
+  let h = `
+  <div class="toolbar">
+    <button class="btn primary" data-act="make">🔀 Shuffle</button>
+    <button class="btn" data-act="addlate">＋ Add student</button>
+    <button class="btn" data-act="copy">Copy as text</button>
+    <button class="btn" data-act="print">Print</button>
+    <button class="btn" data-act="present">Projector view</button>
+  </div>
+  <div class="toggles">${tg('showStrength', 'Strength')}${tg('showGender', 'Boys/Girls')}${tg('showNotes', 'Friend report')}${[3,4,5].includes(k) ? tg('showSchedule', 'Schedule') : ''}
+    ${pins.size ? `<button class="tog" data-act="unlockall">🔓 Unlock all (${pins.size})</button>` : ''}</div>
+  <p class="hint no-print">Tap a name to select it, then tap another name to <b>swap</b>, or <b>Move here</b> on a team. On a computer you can also drag. 🔒 Locked students stay on their team when you shuffle.</p>
+  <h2 class="restitle">${esc(DB.ui.cls)} · ${esc(sport === OVERALL ? 'Overall' : sport)}<span class="print-only print-inline" style="font-weight:400;font-size:12pt"> · ${esc(date)}</span></h2>
+  <div class="teams" style="--pcols:${pcols}">`;
+  st.teams.forEach((t, ti) => {
+    const inf = ev.info[ti], allPinned = t.length && t.every(id => pins.has(id));
+    h += `<div class="team" data-team="${ti}">
+      <div class="thead"><h3>Team ${ti+1}</h3>
+        <div class="tmeta"><span>${inf.size} players</span>${DB.ui.showStrength ? `<span class="str">Strength ${inf.sum}</span>` : ''}${DB.ui.showGender ? `<span>${inf.boys}B · ${inf.girls}G${inf.other ? ` · ${inf.other}–` : ''}</span>` : ''}</div>
+        ${sel && selTeam !== ti ? `<button class="movehere no-print" data-act="movehere" data-team="${ti}">Move ${esc(nameOf(sel).split(' ')[0])} here</button>` : ''}
+      </div>
+      <ol class="plist">${t.map(id => chip(id, pins)).join('')}</ol>
+      <div class="tfoot"><button class="btn-s" data-act="lockteam" data-team="${ti}">${allPinned ? '🔓 Unlock team' : '🔒 Lock team'}</button></div>
+    </div>`;
+  });
+  h += `</div>`;
+  if (DB.ui.showNotes){
+    h += `<div class="report">`;
+    h += ev.elig ? `<div class="okline">${ev.got}/${ev.elig} got a friend</div>` : `<div class="small">No friend requests among today’s players.</div>`;
+    if (DB.ui.showStrength) h += ` <span class="small" style="margin-left:8px">Strength spread: ${ev.spread} (${ev.minSum}–${ev.maxSum})</span>`;
+    if (ev.missed.length) h += `<p style="margin:8px 0 0"><b>Didn’t get a friend:</b> ${ev.missed.map(nameOf).map(esc).join(', ')}</p>`;
+    const extra = [];
+    if (ev.noneHere.length) extra.push(`${ev.noneHere.length} had none of their friends here today (${ev.noneHere.map(nameOf).map(esc).join(', ')})`);
+    if (ev.noReq.length) extra.push(`${ev.noReq.length} didn’t list friends`);
+    if (extra.length) h += `<p class="small" style="margin:4px 0 0">${extra.join(' · ')}</p>`;
+    if (ev.warnings.length) h += `<div class="warnbox"><b>Heads up</b><ul>${ev.warnings.map(w => `<li>${esc(w)}</li>`).join('')}</ul></div>`;
+    h += `</div>`;
+  }
+  if (DB.ui.showSchedule && [3,4,5].includes(k)){
+    const rr = roundRobin(k), courts = Math.max(...rr.map(r => r.games.length)), rests = rr.some(r => r.rest.length);
+    h += `<div class="sched-wrap"><h3 style="margin:16px 0 6px">Round-robin (${courts} court${courts > 1 ? 's' : ''})</h3>
+      <table class="sched"><thead><tr><th>Round</th>${Array.from({length:courts}, (_, c) => `<th>Court ${c+1}</th>`).join('')}${rests ? '<th>Resting</th>' : ''}</tr></thead><tbody>
+      ${rr.map((r, i) => `<tr><td><b>${i+1}</b></td>${Array.from({length:courts}, (_, c) => `<td>${r.games[c] ? `Team ${r.games[c][0]} vs Team ${r.games[c][1]}` : ''}</td>`).join('')}${rests ? `<td>${r.rest.map(x => 'Team ' + x).join(', ')}</td>` : ''}</tr>`).join('')}
+      </tbody></table></div>`;
+  }
+  return h;
+}
+function renderActionBar(){
+  const bar = $('#actionbar'); const st = teamsState();
+  if (!sel || !st || teamIndexOf(sel, st) < 0 || DB.ui.tab !== 'teams'){ sel = null; bar.className = ''; bar.innerHTML = ''; document.body.classList.remove('has-sel'); return; }
+  const pinned = (st.pins || []).includes(sel);
+  bar.className = 'show'; document.body.classList.add('has-sel');
+  bar.innerHTML = `<div class="abw"><div class="who">${esc(nameOf(sel))} <small>Team ${teamIndexOf(sel, st)+1} · tap another name to swap, or “Move here”</small></div>
+    <button class="btn" data-act="pin" data-id="${sel}">${pinned ? '🔓 Unlock' : '🔒 Lock to team'}</button>
+    <button class="btn" data-act="absentsel" data-id="${sel}">Left / absent</button>
+    <button class="btn" data-act="desel">Done</button></div>`;
+}
+function renderStudentsTab(){
+  const studs = classStudents(), sport = DB.ui.sport, cls = DB.ui.cls;
+  const opts = studs.map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join('');
+  const pairList = (list, kind) => {
+    const rows = list.map((p, i) => [p, i]).filter(([p]) => SM.get(p[0]) && SM.get(p[0]).cls === cls);
+    return rows.length ? `<ul class="pairs">${rows.map(([p, i]) => `<li>${esc(nameOf(p[0]))} ${kind === 'together' ? '＋' : '✕'} ${esc(nameOf(p[1]))} <button class="link" data-act="delpair" data-kind="${kind}" data-i="${i}">remove</button></li>`).join('')}</ul>` : '<p class="small">None yet.</p>';
+  };
+  return `
+  <div class="card">
+    <div class="row"><span class="lbl">Class</span>${classSeg()}</div>
+    <div class="row"><label class="lbl" for="sportSel2">Sport</label>${sportSelect('sportSel2')}<span class="small">Strength below is for this sport. Blue = your override, grey italic = no rating (uses their average).</span></div>
+  </div>
+  <div class="card">
+    <div class="cardhead"><h2>${esc(cls)} students <span class="muted">${studs.length}</span></h2></div>
+    ${studs.length ? studs.map(s => {
+      const ov = overrideOf(s, sport), eff = strengthOf(s, sport), g = genderOf(s);
+      return `<div class="srow">
+        <div class="sname"><b>${esc(s.name)}</b>${s.responded ? '' : '<span class="tag">no form</span>'}
+          <div class="small">Friends: ${s.friends.length ? s.friends.map(nameOf).map(esc).join(', ') : '–'}${s.avoid.length ? ` · <span style="color:var(--bad)">Not with: ${s.avoid.map(nameOf).map(esc).join(', ')}</span>` : ''}</div>
+          ${s.notes ? `<div class="note">📝 ${esc(s.notes)}</div>` : ''}</div>
+        <div class="sctl">
+          <div class="seg sm" aria-label="Gender">${[['b','B'],['g','G'],['','–']].map(([v, l]) => `<button data-act="gender" data-id="${s.id}" data-v="${v}" class="${g === v ? 'on' : ''}" title="${v === 'b' ? 'Boy' : v === 'g' ? 'Girl' : 'Not set'}">${l}</button>`).join('')}</div>
+          <div class="stepper" aria-label="Strength"><button data-act="str" data-id="${s.id}" data-d="-1" aria-label="Lower strength">−</button><span class="v ${ov != null ? 'ovr' : (hasRating(s, sport) ? '' : 'guess')}">${eff}</span><button data-act="str" data-id="${s.id}" data-d="1" aria-label="Raise strength">+</button></div>
+          ${ov != null ? `<button class="link" data-act="strreset" data-id="${s.id}">reset to ${autoStrength(s, sport)}</button>` : ''}
+          <button class="icon danger" data-act="delstudent" data-id="${s.id}" title="Delete student" aria-label="Delete ${esc(s.name)}">✕</button>
+        </div></div>`;
+    }).join('') : '<p class="small">No students in this class yet.</p>'}
+    <h3>Add a student</h3>
+    <div class="inline"><input type="text" id="newName" placeholder="Full name" aria-label="New student name" style="flex:1;min-width:180px"><button class="btn" data-act="addstudent">Add to ${esc(cls)}</button></div>
+  </div>
+  <div class="card">
+    <h2>Teacher rules for ${esc(cls)}</h2>
+    <p class="hint">These are saved and used every time. Students’ own “not with” requests are used too, but these are stronger.</p>
+    <h3>Always together</h3>
+    <div class="inline"><select id="tgA">${opts}</select><select id="tgB">${opts}</select><button class="btn" data-act="addpair" data-kind="together">Add</button></div>
+    ${pairList(DB.rules.together, 'together')}
+    <h3>Keep apart</h3>
+    <div class="inline"><select id="apA">${opts}</select><select id="apB">${opts}</select><button class="btn" data-act="addpair" data-kind="apart">Add</button></div>
+    ${pairList(DB.rules.apart, 'apart')}
+  </div>
+  <div class="card">
+    <h2>Class list for ${esc(cls)}</h2>
+    <p class="hint">Paste one name per line, e.g. copied from your roster. Students who didn’t fill in the form will still appear, and misspelled form names get matched to these spellings.</p>
+    <textarea id="rosterText" placeholder="Avery Lin&#10;Ben Okafor&#10;…"></textarea>
+    <div class="toolbar"><button class="btn primary" data-act="roster">Save class list</button></div>
+  </div>`;
+}
+function renderDataTab(){
+  const r = DB.lastImport;
+  const counts = DB.classes.map(c => `${esc(c)}: ${DB.students.filter(s => s.cls === c).length} students (${DB.students.filter(s => s.cls === c && s.responded).length} responded)`).join(' · ');
+  return `
+  <div class="card">
+    <h2>Import Google Form responses</h2>
+    <p class="hint">In Google Sheets: File → Download → Comma-separated values (.csv). Upload it here. You can re-import anytime; for each student the latest response wins, and your rules and overrides are kept.</p>
+    <div class="row"><span class="lbl" style="min-width:auto">Rows with no class go to</span>${classSeg()}</div>
+    <div class="toolbar"><label class="btn primary" style="display:inline-flex;align-items:center">Choose CSV file…<input type="file" id="csvFile" accept=".csv,.tsv,text/csv,text/plain" data-chg="csvfile" hidden></label></div>
+    <details><summary style="cursor:pointer;min-height:44px;display:flex;align-items:center">…or paste CSV text</summary>
+      <textarea id="csvText" placeholder="Paste the CSV here"></textarea>
+      <div class="toolbar"><button class="btn" data-act="importtext">Import pasted text</button></div></details>
+    <p class="small">${counts}</p>
+  </div>
+  ${r ? `<div class="card"><h2>Last import</h2>
+    <ul class="report-list">
+      <li>${r.rows} response rows read${r.skipped ? `, ${r.skipped} blank skipped` : ''}${r.dupes ? `, <b>${r.dupes} duplicate submission${r.dupes > 1 ? 's' : ''}</b> (latest kept)` : ''}</li>
+      <li>${r.updated} existing students updated, ${r.added.length} new${r.added.length ? `: ${r.added.map(esc).join(', ')}` : ''}</li>
+      <li>Sports found: ${r.sports.length ? r.sports.map(esc).join(', ') : '<b>none</b>. Check the rating columns.'}</li>
+      ${r.fuzzy.length ? `<li>Names matched despite spelling: ${r.fuzzy.map(([a, b]) => `“${esc(a)}” → ${esc(b)}`).join(', ')}</li>` : ''}
+      ${r.unmatched.length ? `<li style="color:var(--warn)">Friend / not-with names not found: ${r.unmatched.map(esc).join(', ')}</li>` : ''}
+      ${r.noClass ? `<li>${r.noClass} rows had no class and were placed by name match or default.</li>` : ''}
+    </ul></div>` : ''}
+  <div class="card">
+    <h2>Try it out</h2>
+    <p class="hint">Loads 30 fake students in 8A and 28 in 8B (with a few messy form rows). <b>This replaces all current data.</b></p>
+    <button class="btn" data-act="sample">Load sample data</button>
+  </div>
+  <div class="card">
+    <h2>Backup</h2>
+    <p class="hint">Data is saved only in this browser on this device. Download a backup to move it to another computer.</p>
+    <div class="toolbar"><button class="btn" data-act="backup">Download backup</button>
+      <label class="btn" style="display:inline-flex;align-items:center">Restore backup…<input type="file" id="restoreFile" accept=".json,application/json" data-chg="restore" hidden></label></div>
+  </div>
+  <div class="card">
+    <h2>Privacy</h2>
+    <p class="hint">This page makes no network requests (it is locked down so it can’t). Names are stored only in this browser’s local storage.</p>
+    <button class="btn danger" data-act="clearall">Clear all data</button>
+  </div>`;
+}
+
+/* ----------------------------- UI plumbing ------------------------------ */
+let toastTimer = 0;
+function toast(msg){ const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2200); }
+function openDialog(html){ const d = $('#dlg'); d.innerHTML = html; if (!d.open) d.showModal(); }
+function closeDialog(){ const d = $('#dlg'); if (d.open) d.close(); }
+function openAddLate(){
+  const st = teamsState(); if (!st) return;
+  const inTeams = new Set(st.teams.flat());
+  const avail = classStudents().filter(s => !inTeams.has(s.id));
+  openDialog(`<div class="dlg"><h2>Add a student to the teams</h2>
+    <div class="row"><label for="lateTeam"><b>Put on</b></label><select id="lateTeam" style="min-width:160px"><option value="-1">Best fit (auto)</option>${st.teams.map((_, i) => `<option value="${i}">Team ${i+1}</option>`).join('')}</select></div>
+    ${avail.length ? `<p class="hint">Tap a student who just arrived:</p><div class="pickgrid">${avail.map(s => `<button class="att" data-act="lateadd" data-id="${s.id}">${esc(s.name)}</button>`).join('')}</div>` : '<p class="hint">Everyone in this class is already on a team.</p>'}
+    <p class="hint" style="margin-top:4px">New to the class?</p>
+    <div class="inline"><input type="text" id="lateName" placeholder="Full name" style="flex:1;min-width:160px"><div class="seg sm" id="lateG">${[['b','B'],['g','G'],['','–']].map(([v, l]) => `<button data-act="lateg" data-v="${v}" class="${v === '' ? 'on' : ''}">${l}</button>`).join('')}</div>
+      <button class="btn primary" data-act="latenew">Add</button></div>
+    <div class="toolbar" style="justify-content:flex-end;margin-top:12px"><button class="btn" data-act="closedlg">Close</button></div></div>`);
+}
+
+document.addEventListener('click', async e => {
+  if (suppressClick){ e.preventDefault(); return; }
+  const el = e.target.closest('[data-act]'); if (!el) return;
+  const act = el.dataset.act, id = el.dataset.id, v = el.dataset.v;
+  switch (act){
+    case 'tab': DB.ui.tab = v; sel = null; save(); render(); window.scrollTo(0, 0); break;
+    case 'cls': DB.ui.cls = v; sel = null; save(); render(); break;
+    case 'k': DB.ui.k = +v; save(); render(); break;
+    case 'att': toggleAttendance(id); break;
+    case 'allhere': {
+      const st = teamsState(); const back = DB.absent[DB.ui.cls] || [];
+      DB.absent[DB.ui.cls] = [];
+      if (st) back.forEach(x => placeStudent(x));
+      save(); render(); break; }
+    case 'make': generate(); break;
+    case 'chip': {
+      if (!sel){ sel = id; }
+      else if (sel === id){ sel = null; }
+      else {
+        const st = teamsState();
+        if (teamIndexOf(sel, st) === teamIndexOf(id, st)) sel = id;
+        else { const a = sel; sel = null; swapStudents(a, id); return; }
+      }
+      render(); break; }
+    case 'movehere': { const a = sel; sel = null; moveStudent(a, +el.dataset.team); break; }
+    case 'pin': togglePin(id); break;
+    case 'absentsel': { sel = null; toggleAttendance(id); break; }
+    case 'desel': sel = null; render(); break;
+    case 'lockteam': {
+      const st = teamsState(), t = st.teams[+el.dataset.team], ps = new Set(st.pins || []);
+      const all = t.every(x => ps.has(x)); t.forEach(x => all ? ps.delete(x) : ps.add(x));
+      st.pins = [...ps]; save(); render(); toast(all ? `Team ${+el.dataset.team+1} unlocked` : `Team ${+el.dataset.team+1} locked`); break; }
+    case 'unlockall': { const st = teamsState(); st.pins = []; save(); render(); toast('Everyone unlocked'); break; }
+    case 'toggle': DB.ui[v] = !DB.ui[v]; save(); render(); break;
+    case 'copy': copyText(); break;
+    case 'print': { sel = null; render(); const old = document.title; document.title = `Teams ${DB.ui.cls} ${DB.ui.sport}`; window.print(); document.title = old; break; }
+    case 'present': document.body.classList.toggle('present'); sel = null; render(); window.scrollTo(0, 0); break;
+    case 'addlate': openAddLate(); break;
+    case 'lateg': el.parentElement.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === el)); break;
+    case 'lateadd': case 'latenew': {
+      const team = +$('#lateTeam').value;
+      let sid = id;
+      if (act === 'latenew'){
+        const nm = $('#lateName').value.trim(); if (!nm){ toast('Type a name first'); return; }
+        const s = newStudent(nm, DB.ui.cls); s.genderT = ($('#lateG .on') || {dataset:{v:''}}).dataset.v || null; sid = s.id;
+      }
+      setAbsentFlag(sid, false);
+      const t = placeStudent(sid, team);
+      closeDialog(); save(); render(); toast(`${nameOf(sid)} added to Team ${t+1}`); break; }
+    case 'closedlg': closeDialog(); break;
+    case 'gender': { const s = SM.get(id); s.genderT = (v === (s.gender || '')) ? null : v; save(); render(); break; }
+    case 'str': {
+      const s = SM.get(id), sport = DB.ui.sport;
+      const nv = Math.max(1, Math.min(5, strengthOf(s, sport) + (+el.dataset.d)));
+      (DB.rules.strength[id] = DB.rules.strength[id] || {})[sport] = nv; save(); render(); break; }
+    case 'strreset': { const o = DB.rules.strength[id]; if (o){ delete o[DB.ui.sport]; if (!Object.keys(o).length) delete DB.rules.strength[id]; } save(); render(); break; }
+    case 'delstudent': if (confirm(`Delete ${nameOf(id)} from all data?`)){ deleteStudent(id); save(); render(); } break;
+    case 'addstudent': { const nm = $('#newName').value.trim(); if (!nm) return; newStudent(nm, DB.ui.cls); save(); render(); toast(`Added ${nm}`); break; }
+    case 'addpair': {
+      const kind = el.dataset.kind, a = $(kind === 'together' ? '#tgA' : '#apA').value, b = $(kind === 'together' ? '#tgB' : '#apB').value;
+      if (!a || !b || a === b){ toast('Pick two different students'); return; }
+      const list = DB.rules[kind], other = DB.rules[kind === 'together' ? 'apart' : 'together'];
+      const same = p => (p[0] === a && p[1] === b) || (p[0] === b && p[1] === a);
+      if (list.some(same)){ toast('Already added'); return; }
+      DB.rules[kind === 'together' ? 'apart' : 'together'] = other.filter(p => !same(p));
+      list.push([a, b]); save(); render(); break; }
+    case 'delpair': DB.rules[el.dataset.kind].splice(+el.dataset.i, 1); save(); render(); break;
+    case 'roster': { const txt = $('#rosterText').value; if (!txt.trim()) return; const r = saveRoster(DB.ui.cls, txt); save(); render();
+      toast(`Class list saved: ${r.total} names, ${r.added} new${r.fixed.length ? `, ${r.fixed.length} spellings fixed` : ''}`); break; }
+    case 'importtext': { const txt = $('#csvText').value; if (!txt.trim()) return; doImport(txt); break; }
+    case 'sample': if (!DB.students.length || confirm('Replace ALL current data with sample data?')) loadSample(); break;
+    case 'backup': {
+      const blob = new Blob([JSON.stringify(DB, null, 1)], {type:'application/json'});
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `gym-teams-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500); break; }
+    case 'clearall': if (confirm('Delete ALL students, teams, rules and settings from this browser? This cannot be undone.')){ try { localStorage.removeItem(LS_KEY); } catch(e){} DB = freshDB(); reindex(); sel = null; render(); toast('All data cleared'); } break;
+  }
+});
+document.addEventListener('keydown', e => {
+  if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('li.p')){ e.preventDefault(); e.target.click(); }
+  if (e.key === 'Escape'){ if (document.body.classList.contains('present')){ document.body.classList.remove('present'); render(); } else if (sel){ sel = null; render(); } }
+  if (e.key === 'Enter' && e.target.id === 'newName') $('[data-act="addstudent"]').click();
+});
+document.addEventListener('change', e => {
+  const el = e.target, c = el.dataset.chg; if (!c) return;
+  if (c === 'sport'){ DB.ui.sport = el.value; save(); render(); }
+  if (c === 'csvfile' && el.files[0]){ const fr = new FileReader(); fr.onload = () => doImport(String(fr.result)); fr.readAsText(el.files[0]); }
+  if (c === 'restore' && el.files[0]){
+    const fr = new FileReader();
+    fr.onload = () => { try { const d = JSON.parse(String(fr.result)); if (!Array.isArray(d.students)) throw 0; if (!confirm('Replace all current data with this backup?')) return; localStorage.setItem(LS_KEY, JSON.stringify(d)); load(); render(); toast('Backup restored'); } catch(err){ toast('That isn’t a valid backup file'); } };
+    fr.readAsText(el.files[0]);
+  }
+});
+function doImport(text){
+  try {
+    const r = importCSV(text, DB.ui.cls);
+    if (r.sports.length && !r.sports.includes(DB.ui.sport)) DB.ui.sport = r.sports[0];
+    save(); render(); toast(`Imported ${r.rows} responses`);
+  } catch(err){ toast(err.message || 'Could not read that file'); }
+}
+
+/* Mouse drag between teams (touch uses tap-to-select so the page still scrolls). */
+function dropTarget(x, y){
+  const el = document.elementFromPoint(x, y); if (!el || !drag) return null;
+  const st = teamsState(), from = teamIndexOf(drag.id, st);
+  const li = el.closest('li.p');
+  if (li && li.dataset.id !== drag.id && teamIndexOf(li.dataset.id, st) !== from) return {kind:'swap', id:li.dataset.id, el:li};
+  const tm = el.closest('.team');
+  if (tm && +tm.dataset.team !== from) return {kind:'move', team:+tm.dataset.team, el:tm};
+  return null;
+}
+document.addEventListener('pointerdown', e => {
+  if (e.pointerType !== 'mouse' || e.button !== 0) return;
+  const li = e.target.closest('li.p'); if (!li) return;
+  drag = {id:li.dataset.id, x:e.clientX, y:e.clientY, started:false, src:li, ghost:null};
+});
+document.addEventListener('pointermove', e => {
+  if (!drag) return;
+  if (!drag.started){
+    if (Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 6) return;
+    drag.started = true; drag.ghost = drag.src.cloneNode(true); drag.ghost.className = 'p ghost';
+    document.body.appendChild(drag.ghost); drag.src.classList.add('dragging');
+  }
+  drag.ghost.style.left = e.clientX + 'px'; drag.ghost.style.top = e.clientY + 'px';
+  document.querySelectorAll('.drop-target').forEach(x => x.classList.remove('drop-target'));
+  const t = dropTarget(e.clientX, e.clientY); if (t) t.el.classList.add('drop-target');
+});
+document.addEventListener('pointerup', e => {
+  if (!drag) return; const d = drag;
+  if (!d.started){ drag = null; return; }
+  const t = dropTarget(e.clientX, e.clientY);
+  drag = null; d.ghost.remove(); d.src.classList.remove('dragging');
+  document.querySelectorAll('.drop-target').forEach(x => x.classList.remove('drop-target'));
+  suppressClick = true; setTimeout(() => { suppressClick = false; }, 0);
+  sel = null;
+  if (t){ t.kind === 'swap' ? swapStudents(d.id, t.id) : moveStudent(d.id, t.team); } else render();
+});
+
+/* ----------------------------- Sample data ------------------------------ */
+function loadSample(){
+  // Deterministic pseudo-random so the sample is the same every time
+  let seed = 20261124; const R = () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+  const pick = (arr, n) => { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--){ const j = Math.floor(R() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a.slice(0, n); };
+  const A = [['Avery Lin','g'],['Ben Okafor','b'],['Chloe Martin','g'],['Dev Sharma','b'],['Ella Novak','g'],['Finn O’Brien','b'],['Grace Huang','g'],['Hassan Ali','b'],['Isla Robertson','g'],['Jordan Patel','b'],['Kai Nakamura','b'],['Leah Cohen','g'],['Mateo Rossi','b'],['Nora Lindqvist','g'],['Owen Clarke','b'],['Priya Singh','g'],['Quinn Murphy',''],['Rosa Delgado','g'],['Sam Whitford','b'],['Tara Mensah','g'],['Umar Siddiqui','b'],['Vera Kowalski','g'],['Wyatt Brooks','b'],['Ximena Torres','g'],['Yusuf Demir','b'],['Zoe Fraser','g'],['Aiden Park','b'],['Bella Ferreira','g'],['Caleb Nguyen','b'],['Daisy Mbeki','g']];
+  const B = [['Abby Chen','g'],['Blake Morrison','b'],['Carmen Vega','g'],['Diego Alvarez','b'],['Emily Strand','g'],['Felix Weber','b'],['Gia Romano','g'],['Henry Osei','b'],['Ivy Kaplan','g'],['Jack Thompson','b'],['Kira Ivanova','g'],['Liam Gallagher','b'],['Maya Haddad','g'],['Noah Fischer','b'],['Olivia Grant','g'],['Pedro Santos','b'],['Ruby Sinclair','g'],['Sebastian Lee','b'],['Talia Ben-David','g'],['Theo Laurent','b'],['Uma Rao','g'],['Victor Hale','b'],['Willow James','g'],['Xavier Dunn','b'],['Yara Khalil','g'],['Zack Morgan','b'],['Lucy Tan','g'],['Marcus Bell','b']];
+  const sports = ['Basketball','Volleyball','Soccer','Floor Hockey','Badminton','Dodgeball','Ultimate Frisbee','Team Handball','Softball','Track & Field','Flag Football','Kickball'];
+  const head = ['Timestamp','Class','Your name (8A)','Your name (8B)','Gender (optional)',
+    ...sports.map(s => `How good are you at each? [${s}]`),
+    'Pick up to 6 friends you’d like on your team (8A)','Pick up to 6 friends you’d like on your team (8B)',
+    'Anyone you’d rather NOT be on a team with? (8A)','Anyone you’d rather NOT be on a team with? (8B)','Anything else your teacher should know? (optional)'];
+  const q = v => /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+  const lines = [head.map(q).join(',')];
+  const label = r => r === 0 ? 'Rather not play' : r === 1 ? '1 - New to it' : r === 5 ? '5 - Very strong' : String(r);
+  let minute = 0;
+  const makeRow = (cls, roster, [name, g], opts = {}) => {
+    const ath = 1.4 + R() * 3.2;
+    const ratings = sports.map(() => R() < 0.07 ? 0 : Math.max(1, Math.min(5, Math.round(ath + (R() - 0.5) * 2))));
+    const others = roster.filter(x => x[0] !== name);
+    const same = others.filter(x => x[1] === g && g), diff = others.filter(x => !(x[1] === g && g));
+    const nf = 1 + Math.floor(R() * 6);
+    let friends = pick(same, Math.min(same.length, Math.ceil(nf * 0.7))).concat(pick(diff, Math.floor(nf * 0.3))).slice(0, 6).map(x => x[0]);
+    if (opts.friends) friends = opts.friends;
+    const gtxt = g === 'b' ? 'Boy' : g === 'g' ? 'Girl' : 'Prefer not to say';
+    minute += 1 + Math.floor(R() * 9);
+    const ts = `11/${opts.day || 18}/2026 ${8 + Math.floor(minute / 60)}:${String(minute % 60).padStart(2, '0')}:${String(Math.floor(R() * 60)).padStart(2, '0')}`;
+    const isA = cls === '8A';
+    const row = [ts, opts.cls || cls, isA ? (opts.as || name) : '', isA ? '' : (opts.as || name), gtxt, ...ratings.map(label),
+      isA ? friends.join(', ') : '', isA ? '' : friends.join(', '), isA ? (opts.avoid || '') : '', isA ? '' : (opts.avoid || ''), opts.note || ''];
+    lines.push(row.map(q).join(','));
+  };
+  // 8A: Daisy Mbeki and Wyatt Brooks didn't fill in the form (they come from the class list).
+  A.forEach(st => {
+    const n = st[0];
+    if (n === 'Daisy Mbeki' || n === 'Wyatt Brooks') return;
+    if (n === 'Ella Novak') makeRow('8A', A, st, {day:17, note:'first try, ignore'});  // duplicate: earlier submission
+    const o = {};
+    if (n === 'Jordan Patel'){ o.as = 'Jordon Patel'; }                            // misspelled own name
+    if (n === 'Mateo Rossi'){ o.as = 'Rossi, Mateo'; o.friends = ['Kai Nakamura', 'Chloe Martín', 'grace huang']; } // last-first + messy friend names
+    if (n === 'Hassan Ali'){ o.avoid = 'Owen Clarke'; }
+    if (n === 'Priya Singh'){ o.avoid = 'Vera Kowalski'; o.note = 'Sprained ankle last month, ok now'; }
+    if (n === 'Sam Whitford'){ o.cls = '8 a'; }                                     // messy class text
+    makeRow('8A', A, st, o);
+  });
+  B.forEach(st => {
+    if (st[0] === 'Marcus Bell') return;
+    const o = {};
+    if (st[0] === 'Theo Laurent') o.avoid = 'Jack Thompson';
+    if (st[0] === 'Lucy Tan') o.cls = '8b ';
+    makeRow('8B', B, st, o);
+  });
+  DB = freshDB(); reindex();
+  saveRoster('8A', A.map(x => x[0]).join('\n'));
+  saveRoster('8B', B.map(x => x[0]).join('\n'));
+  // Non-responders: set gender as a teacher would
+  [['Daisy Mbeki','g'],['Wyatt Brooks','b'],['Marcus Bell','b']].forEach(([n, g]) => { const s = DB.students.find(x => x.name === n); if (s) s.genderT = g; });
+  importCSV(lines.join('\n'), '8A');
+  DB.ui.sport = 'Basketball'; DB.ui.cls = '8A'; DB.ui.k = 4; DB.ui.tab = 'teams';
+  sel = null; save(); render(); toast('Sample data loaded: 30 in 8A, 28 in 8B');
+  window.__sampleCSV = lines.join('\n');
+}
+
+load(); render();
+</script>
+</body>
+</html>
