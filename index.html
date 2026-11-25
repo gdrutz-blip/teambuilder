@@ -478,7 +478,7 @@ function resolveLinks(rep){
       for (const raw of raws || []){
         const m = matchName(raw, cands);
         if (m){ if (!ids.includes(m.s.id)) ids.push(m.s.id); }
-        else if (rep) rep.unmatched.push(`“${raw}” (${kind} of ${s.name})`);
+        else if (rep){ const me = matchName(raw, [s]); if (!(me && me.exact)) rep.unmatched.push(`“${raw}” (${kind} of ${s.name})`); }  // students listing themselves are ignored
       }
       return ids;
     };
