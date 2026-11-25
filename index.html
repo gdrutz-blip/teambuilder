@@ -40,7 +40,7 @@ main{max-width:1400px;margin:0 auto;padding:16px 16px 120px}
 .hint{color:var(--muted);font-size:15px;margin:4px 0 10px}
 .muted{color:var(--muted);font-weight:500}
 .row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:6px 0}
-.lbl{min-width:64px;font-weight:700}
+.lbl{min-width:96px;font-weight:700}
 .seg{display:inline-flex;flex-wrap:wrap;gap:6px}
 .seg button{min-width:52px;min-height:48px;padding:6px 14px;border:1.5px solid var(--line);background:var(--card);border-radius:10px;font-weight:700}
 .seg button.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
@@ -88,6 +88,13 @@ textarea{width:100%;min-height:130px;font-family:inherit}
 .lock{font-size:15px}
 .tfoot{display:flex;justify-content:flex-end;padding-top:6px}
 .report{margin-top:14px}
+.grphead{font-size:22px;margin:18px 0 8px}
+.grphead:first-of-type{margin-top:6px}
+.lvcols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.lvcol h3{margin:0 0 8px}
+.lvcol .attgrid{grid-template-columns:repeat(auto-fill,minmax(130px,1fr))}
+.att.either{border-style:dashed}
+.att.moved{border-color:var(--accent);border-width:2.5px}
 .okline{background:var(--ok-bg);color:var(--ok);font-weight:700;border-radius:10px;padding:10px 12px;display:inline-block}
 .warnbox{background:var(--warn-bg);color:var(--warn);border-radius:10px;padding:10px 12px;margin-top:8px}
 .warnbox ul{margin:4px 0 0;padding-left:20px}
@@ -132,9 +139,10 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
 .report-list{margin:4px 0;padding-left:20px}
 .kbd{font-family:ui-monospace,monospace;font-size:14px;background:var(--soft);padding:1px 5px;border-radius:5px}
 /* Projector mode */
-body.present header, body.present .setup, body.present #attCard, body.present .btn-big, body.present .toolbar, body.present .tfoot, body.present #tab-students, body.present #tab-data, body.present .toggles{display:none!important}
+body.present header, body.present .setup, body.present #attCard, body.present #lvCard, body.present .btn-big, body.present .toolbar, body.present .tfoot, body.present #tab-students, body.present #tab-data, body.present .toggles{display:none!important}
 body.present main{max-width:none;padding:16px 24px 40px}
 body.present .restitle{font-size:34px;text-align:center}
+body.present .grphead{font-size:30px}
 body.present .thead h3{font-size:34px}
 body.present .tmeta{font-size:20px}
 body.present .p{font-size:28px;min-height:52px}
@@ -150,12 +158,13 @@ body.present .exitpresent:hover{opacity:1}
   @page{margin:10mm}
   :root{--ink:#000;--muted:#333;--line:#999;--card:#fff;--bg:#fff;--soft:#eee;--accent:#000}
   body{background:#fff;color:#000;font-size:11pt}
-  header,.no-print,.setup,#attCard,.btn-big,.toolbar,.toggles,#actionbar,#toast,#tab-students,#tab-data,.exitpresent,dialog{display:none!important}
+  header,.no-print,.setup,#attCard,#lvCard,.btn-big,.toolbar,.toggles,#actionbar,#toast,#tab-students,#tab-data,.exitpresent,dialog{display:none!important}
   main{padding:0;max-width:none}
   .print-only{display:block}
   .print-inline{display:inline!important}
   .tfoot,.hint{display:none!important}
   .restitle{font-size:16pt;margin:0 0 6px}
+  .grphead{font-size:12pt;margin:8px 0 3px}
   .teams{grid-template-columns:repeat(var(--pcols,3),1fr)!important;gap:6px}
   .team{break-inside:avoid;box-shadow:none;border:1px solid #888;padding:6px}
   .thead{padding:0 2px 3px;margin-bottom:2px}
@@ -223,8 +232,8 @@ function freshDB(){
   return {
     v:1, nextId:1, classes:['8A','8B'], sports:DEFAULT_SPORTS.slice(), students:[],
     rules:{together:[], apart:[], strength:{}},
-    absent:{}, teams:{}, lastImport:null,
-    ui:{cls:'8A', sport:'Basketball', k:4, showStrength:true, showGender:true, showNotes:true, showSchedule:true, tab:'teams'}
+    absent:{}, teams:{}, lastImport:null, levelMoves:{},
+    ui:{cls:'8A', sport:'Basketball', k:4, split:false, kC:2, kK:2, genderEq:true, showStrength:true, showGender:true, showNotes:true, showSchedule:true, tab:'teams'}
   };
 }
 let DB, SM = new Map(), sel = null, drag = null, suppressClick = false;
@@ -322,7 +331,7 @@ function canonSport(label, strict){
   return label.trim().replace(/\s+/g,' ').replace(/\b\w/g, c => c.toUpperCase());
 }
 function mapHeaders(hdr){
-  const H = {ts:-1, cls:-1, name:[], first:-1, last:-1, gender:-1, notes:[], friends:[], avoid:[], sports:[]};
+  const H = {ts:-1, cls:-1, name:[], first:-1, last:-1, gender:-1, notes:[], friends:[], avoid:[], sports:[], levels:[], levelAll:-1};
   const isAvoid = h => /\bnot\b|avoid|apart|don'?t|do not|rather not be/.test(h) && /team|with|play|be/.test(h);
   hdr.forEach((raw, i) => {
     const h = String(raw).toLowerCase().trim();
@@ -332,11 +341,15 @@ function mapHeaders(hdr){
     if (/e-?mail|^score$|total score/.test(h)) return;
     if (br){
       const q = h.slice(0, br.index);
-      if (isAvoid(q)) H.avoid.push(i);
+      const lab = raw.match(/\[(.+?)\]\s*$/)[1].trim();
+      const sp = lab.length > 2 ? canonSport(lab, false) : null;   // ignores stray one-letter rows like [B]
+      if (/casual|competitive/.test(q)){ if (sp) H.levels.push({col:i, sport:sp}); }
+      else if (isAvoid(q)) H.avoid.push(i);
       else if (/friend|teammate/.test(q)) H.friends.push(i);
-      else { const sp = canonSport(raw.match(/\[(.+?)\]\s*$/)[1], false); if (sp) H.sports.push({col:i, sport:sp}); }
+      else if (sp) H.sports.push({col:i, sport:sp});
       return;
     }
+    if (/casual|competitive/.test(h)){ if (H.levelAll < 0) H.levelAll = i; return; }
     if (isAvoid(h)){ H.avoid.push(i); return; }
     if (/friend|teammate|like to play with|want on your team/.test(h)){ H.friends.push(i); return; }
     if (/first name/.test(h)){ H.first = i; return; }
@@ -357,6 +370,14 @@ function parseRating(v){
   if (!v) return undefined;
   if (/rather|not play|n\/a|^no$|skip|don'?t/.test(v)) return 0;
   const m = v.match(/[1-5]/); return m ? +m[0] : undefined;
+}
+function parseLevel(v){
+  v = String(v || '').trim().toLowerCase();
+  if (!v) return '';
+  if (/compet/.test(v)) return 'c';
+  if (/casual|friendly|relax/.test(v)) return 'k';
+  if (/either|both|\bany|no pref|don.?t mind/.test(v)) return 'e';
+  return '';
 }
 function parseGender(v){
   v = String(v || '').trim().toLowerCase();
@@ -383,7 +404,7 @@ function splitNames(cell){
 }
 function newStudent(name, cls){
   if (!DB.classes.includes(cls)) DB.classes.push(cls);
-  const s = {id:'s' + (DB.nextId++), name:name.trim(), cls, gender:'', genderT:null, ratings:{}, friendsRaw:[], avoidRaw:[], friends:[], avoid:[], notes:'', responded:false, fromRoster:false};
+  const s = {id:'s' + (DB.nextId++), name:name.trim(), cls, gender:'', genderT:null, ratings:{}, levels:{}, levelAll:'', friendsRaw:[], avoidRaw:[], friends:[], avoid:[], notes:'', responded:false, fromRoster:false};
   DB.students.push(s); SM.set(s.id, s); return s;
 }
 function importCSV(text, fallbackCls){
@@ -391,8 +412,7 @@ function importCSV(text, fallbackCls){
   if (rows.length < 2) throw new Error('That file has no response rows.');
   const H = mapHeaders(rows[0]);
   if (!H.name.length && H.first < 0) throw new Error('Couldn’t find a name column. One header must contain the word “name”.');
-  const rep = {rows:0, added:[], updated:0, dupes:0, fuzzy:[], skipped:0, unmatched:[], sports:[...new Set(H.sports.map(x => x.sport))], friendCols:H.friends.length, at:Date.now(), noClass:0};
-  H.sports.forEach(x => { if (!DB.sports.includes(x.sport)) DB.sports.push(x.sport); });
+  const rep = {rows:0, added:[], updated:0, dupes:0, fuzzy:[], skipped:0, unmatched:[], sports:[], friendCols:H.friends.length, at:Date.now(), noClass:0};
   const recs = [];
   rows.slice(1).forEach((r, ri) => {
     const get = c => (c >= 0 && c < r.length) ? String(r[c]).trim() : '';
@@ -401,13 +421,20 @@ function importCSV(text, fallbackCls){
     if (!name){ rep.skipped++; return; }
     const ratings = {};
     H.sports.forEach(x => { const v = parseRating(get(x.col)); if (v !== undefined) ratings[x.sport] = v; });
+    const levels = {}; H.levels.forEach(x => { const v = parseLevel(get(x.col)); if (v) levels[x.sport] = v; });
+    const levelAll = H.levelAll >= 0 ? parseLevel(get(H.levelAll)) : '';
     const friends = []; H.friends.forEach(c => splitNames(get(c)).forEach(n => friends.push(n)));
     const avoid = []; H.avoid.forEach(c => splitNames(get(c)).forEach(n => avoid.push(n)));
     const tsRaw = get(H.ts);
     recs.push({row:ri, name, cls:normCls(get(H.cls)), gender:H.gender >= 0 ? parseGender(get(H.gender)) : undefined,
-      ratings, friends, avoid, notes:H.notes.map(get).filter(Boolean).join(' | '), ts:tsRaw ? Date.parse(tsRaw) : NaN});
+      ratings, levels, levelAll, friends, avoid, notes:H.notes.map(get).filter(Boolean).join(' | '), ts:tsRaw ? Date.parse(tsRaw) : NaN});
   });
   rep.rows = recs.length;
+  // only sports that someone actually answered become choices (hides emptied or stray grid rows)
+  const used = new Set(); recs.forEach(r => Object.keys(r.ratings).forEach(sp => used.add(sp)));
+  rep.sports = [...new Set(H.sports.map(x => x.sport))].filter(sp => used.has(sp));
+  rep.sports.forEach(sp => { if (!DB.sports.includes(sp)) DB.sports.push(sp); });
+  rep.levelCols = H.levels.length + (H.levelAll >= 0 ? 1 : 0);
   const useTs = recs.length && recs.every(r => !isNaN(r.ts));
   // Match each response to a student (roster names allow fuzzy matching; response-only names must match exactly)
   for (const rec of recs){
@@ -435,7 +462,7 @@ function importCSV(text, fallbackCls){
   for (const [sid, rec] of latest){
     const s = SM.get(sid);
     if (rec.gender !== undefined) s.gender = rec.gender;
-    s.ratings = rec.ratings; s.friendsRaw = rec.friends; s.avoidRaw = rec.avoid; s.notes = rec.notes; s.responded = true;
+    s.ratings = rec.ratings; s.levels = rec.levels; s.levelAll = rec.levelAll; s.friendsRaw = rec.friends; s.avoidRaw = rec.avoid; s.notes = rec.notes; s.responded = true;
     if (!addedIds.has(sid)) rep.updated++;
   }
   resolveLinks(rep);
@@ -519,7 +546,8 @@ function buildModel(ids, k, sport){
   const apart = [...pw].map(([key, w]) => { const [i, j] = key.split(',').map(Number); return [i, j, w]; });
   const tog = DB.rules.together.map(([x, y]) => [ix.get(x), ix.get(y)]).filter(([i, j]) => i !== undefined && j !== undefined);
   let B = 0, G = 0; gen.forEach(g => { if (g === 1) B++; else if (g === 2) G++; });
-  const minB = Math.min(2, Math.floor(B / k)), minG = Math.min(2, Math.floor(G / k));
+  const eq = DB.ui.genderEq !== false;
+  const minB = eq ? Math.min(2, Math.floor(B / k)) : 0, minG = eq ? Math.min(2, Math.floor(G / k)) : 0;
   const sorted = str.slice().sort((a, b) => b - a);
   let thr = sorted[Math.min(k, n) - 1] ?? 99;
   let isTop = str.map(v => v >= thr);
@@ -541,7 +569,7 @@ function buildModel(ids, k, sport){
       c += Math.abs(sum[t] - mean);
       if (top[t] > topCap) c += 8 * (top[t] - topCap);
     }
-    c += 300 * Math.max(0, bmx - bmn - Bx) + 300 * Math.max(0, gmx - gmn - Gx);
+    if (eq) c += 300 * Math.max(0, bmx - bmn - Bx) + 300 * Math.max(0, gmx - gmn - Gx);
     const r = mx - mn; c += 12 * r * r;
     for (let i = 0; i < n; i++){
       const f = fr[i]; if (!f.length) continue;
@@ -614,25 +642,54 @@ function optimize(ids, k, sport, pins, prevTeams){
 }
 
 /* ---------------------------- Evaluation -------------------------------- */
+/* ---- Level split: who goes to the Competitive vs Casual group ---- */
+const LV_NAME = {c:'Competitive', k:'Casual'};
+const lvKey = () => DB.ui.cls + '|' + DB.ui.sport;
+function levelPref(s, sport){
+  const mv = (DB.levelMoves[DB.ui.cls + '|' + sport] || {})[s.id];
+  return mv || (s.levels || {})[sport] || s.levelAll || 'e';
+}
+/** Players who chose a level (or were moved by the teacher) stay in it. "Either" players fill whichever group
+    is short of its target size; the strongest Either players go to Competitive first. */
+function assignGroups(ids, kC, kK, sport){
+  const n = ids.length, K = kC + kK;
+  const tC = Math.min(n - kK, Math.max(kC, Math.round(n * kC / K)));
+  const C = [], Kk = [], E = [];
+  ids.forEach(id => { const l = levelPref(SM.get(id), sport); (l === 'c' ? C : l === 'k' ? Kk : E).push(id); });
+  const counts = {c:C.length, k:Kk.length, e:E.length};
+  E.sort((a, b) => strengthOf(SM.get(b), sport) - strengthOf(SM.get(a), sport) || byName(a, b));
+  const toC = E.slice(0, Math.min(Math.max(0, tC - C.length), E.length)), toK = E.slice(toC.length);
+  const c = C.concat(toC), k = Kk.concat(toK);
+  return {c, k, either:new Set(E), counts, tC, ok:c.length >= kC && k.length >= kK};
+}
+function sizesText(n, k){
+  if (n < k) return `only ${n} for ${k} teams`;
+  const b = Math.floor(n / k), e = n % k;
+  return e ? `${e} team${e > 1 ? 's' : ''} of ${b+1}, ${k-e} of ${b}` : `${k} team${k > 1 ? 's' : ''} of ${b}`;
+}
+function groupIdx(st, g){ return st.teams.map((_, i) => i).filter(i => !st.groups || st.groups[i] === g); }
+
 function evaluate(st, sport){
-  const teams = st.teams, all = teams.flat(), here = new Set(all), teamOf = new Map();
-  teams.forEach((t, ti) => t.forEach(id => teamOf.set(id, ti)));
+  const teams = st.teams, k = teams.length, groups = st.groups || teams.map(() => 'a');
+  const all = teams.flat(), here = new Set(all), teamOf = new Map(), grpOf = new Map();
+  teams.forEach((t, ti) => t.forEach(id => { teamOf.set(id, ti); grpOf.set(id, groups[ti]); }));
   const info = teams.map(t => {
     let sum = 0, boys = 0, girls = 0, other = 0;
     t.forEach(id => { const s = SM.get(id); sum += strengthOf(s, sport); const g = gNum(s); g === 1 ? boys++ : g === 2 ? girls++ : other++; });
     return {size:t.length, sum, boys, girls, other};
   });
-  let elig = 0, got = 0; const missed = [], noneHere = [], noReq = [];
+  let elig = 0, got = 0; const missed = [], noneHere = [], noReq = [], otherLevel = [];
   for (const id of all){
     const s = SM.get(id), req = s.friends || [];
     if (!req.length){ noReq.push(id); continue; }
     const pres = req.filter(f => here.has(f));
     if (!pres.length){ noneHere.push(id); continue; }
     elig++;
-    if (pres.some(f => teamOf.get(f) === teamOf.get(id))) got++; else missed.push(id);
+    const same = pres.filter(f => grpOf.get(f) === grpOf.get(id));
+    if (same.some(f => teamOf.get(f) === teamOf.get(id))) got++;
+    else { missed.push(id); if (!same.length) otherLevel.push(id); }
   }
-  const warnings = [];
-  const seen = new Set();
+  const warnings = [], seen = new Set(), eq = DB.ui.genderEq !== false;
   for (const id of all){
     for (const o of SM.get(id).avoid || []){
       const key = [id, o].sort().join();
@@ -641,16 +698,30 @@ function evaluate(st, sport){
   }
   DB.rules.apart.forEach(([x, y]) => { if (here.has(x) && here.has(y) && teamOf.get(x) === teamOf.get(y)) warnings.push(`Keep-apart rule broken: ${nameOf(x)} & ${nameOf(y)} (Team ${teamOf.get(x)+1})`); });
   DB.rules.together.forEach(([x, y]) => { if (here.has(x) && here.has(y) && teamOf.get(x) !== teamOf.get(y)) warnings.push(`Together rule broken: ${nameOf(x)} (Team ${teamOf.get(x)+1}) & ${nameOf(y)} (Team ${teamOf.get(y)+1})`); });
-  const B = info.reduce((a, t) => a + t.boys, 0), G = info.reduce((a, t) => a + t.girls, 0), k = teams.length;
-  const minB = Math.min(2, Math.floor(B / k)), minG = Math.min(2, Math.floor(G / k));
-  info.forEach((t, i) => {
-    if (t.boys < minB) warnings.push(`Team ${i+1} has only ${t.boys} boy${t.boys === 1 ? '' : 's'}`);
-    if (t.girls < minG) warnings.push(`Team ${i+1} has only ${t.girls} girl${t.girls === 1 ? '' : 's'}`);
+  const groupStats = [];
+  [...new Set(groups)].forEach(g => {
+    const idx = groups.map((x, i) => x === g ? i : -1).filter(i => i >= 0);
+    const lab = g === 'a' ? '' : LV_NAME[g] + ': ';
+    const B = idx.reduce((a, i) => a + info[i].boys, 0), G = idx.reduce((a, i) => a + info[i].girls, 0);
+    if (eq){
+      const minB = Math.min(2, Math.floor(B / idx.length)), minG = Math.min(2, Math.floor(G / idx.length));
+      idx.forEach(i => {
+        if (info[i].boys < minB) warnings.push(`${lab}Team ${i+1} has only ${info[i].boys} boy${info[i].boys === 1 ? '' : 's'}`);
+        if (info[i].girls < minG) warnings.push(`${lab}Team ${i+1} has only ${info[i].girls} girl${info[i].girls === 1 ? '' : 's'}`);
+      });
+    }
+    const sizes = idx.map(i => info[i].size);
+    if (Math.max(...sizes) - Math.min(...sizes) > 1) warnings.push(`${lab}team sizes are uneven (${sizes.join(', ')}). Tap Shuffle to rebalance; locked students stay put.`);
+    const sums = idx.map(i => info[i].sum);
+    groupStats.push({g, spread:Math.max(...sums) - Math.min(...sums), minSum:Math.min(...sums), maxSum:Math.max(...sums)});
   });
-  const sizes = info.map(t => t.size);
-  if (Math.max(...sizes) - Math.min(...sizes) > 1) warnings.push(`Team sizes are uneven (${sizes.join(', ')}). Tap Shuffle to rebalance; locked students stay put.`);
-  const sums = info.map(t => t.sum);
-  return {info, elig, got, missed, noneHere, noReq, warnings, spread:Math.max(...sums) - Math.min(...sums), minSum:Math.min(...sums), maxSum:Math.max(...sums)};
+  return {info, elig, got, missed, noneHere, noReq, otherLevel, warnings, groupStats,
+    spread:Math.max(...groupStats.map(x => x.spread)), minSum:Math.min(...groupStats.map(x => x.minSum)), maxSum:Math.max(...groupStats.map(x => x.maxSum))};
+}
+/** Round-robin blocks: one for the whole class, or one per level group (groups of 3-6 teams). */
+function scheduleBlocks(st){
+  const parts = st.groups ? ['c', 'k'].map(g => ({g, off:st.groups.indexOf(g), k:st.groups.filter(x => x === g).length})) : [{g:null, off:0, k:st.teams.length}];
+  return parts.filter(p => p.k >= 3 && p.k <= 6).map(p => ({title:p.g ? LV_NAME[p.g] + ' round-robin' : 'Round-robin', off:p.off, k:p.k, rr:roundRobin(p.k)}));
 }
 function roundRobin(k){
   const list = [...Array(k).keys()].map(i => i + 1); if (k % 2) list.push(0);
@@ -666,18 +737,29 @@ function roundRobin(k){
 
 /* ----------------------------- Actions ---------------------------------- */
 function generate(){
-  const cls = DB.ui.cls, k = DB.ui.k, sport = DB.ui.sport;
+  const cls = DB.ui.cls, sport = DB.ui.sport, split = !!DB.ui.split;
   const abs = absentSet();
   const ids = classStudents().filter(s => !abs.has(s.id)).map(s => s.id);
+  const kC = DB.ui.kC, kK = DB.ui.kK, k = split ? kC + kK : DB.ui.k;
   if (ids.length < k){ toast(`Need at least ${k} players for ${k} teams.`); return; }
-  const prev = teamsState(); const pins = {};
-  if (prev){
-    const ps = new Set(prev.pins || []);
-    prev.teams.forEach((t, ti) => t.forEach(id => { if (ps.has(id) && ti < k && ids.includes(id)) pins[id] = ti; }));
+  let groups = null, parts;
+  if (split){
+    const ag = assignGroups(ids, kC, kK, sport);
+    if (!ag.ok){ toast(`Not enough players: Competitive has ${ag.c.length} for ${kC} teams, Casual has ${ag.k.length} for ${kK}. Move some students or change the team counts.`); return; }
+    groups = [...Array(kC).fill('c'), ...Array(kK).fill('k')];
+    parts = [{ids:ag.c, k:kC, off:0}, {ids:ag.k, k:kK, off:kC}];
+  } else parts = [{ids, k, off:0}];
+  const prev = teamsState();
+  const same = prev && JSON.stringify(prev.groups || null) === JSON.stringify(groups);
+  const ps = new Set(same ? (prev.pins || []) : []);
+  const teams = [], kept = [], t0 = performance.now();
+  for (const part of parts){
+    const pins = {};
+    if (same) part.ids.forEach(id => { const ti = teamIndexOf(id, prev); if (ps.has(id) && ti >= part.off && ti < part.off + part.k){ pins[id] = ti - part.off; kept.push(id); } });
+    const prevT = same ? prev.teams.slice(part.off, part.off + part.k) : null;
+    optimize(part.ids, part.k, sport, pins, prevT).forEach(t => teams.push(t));
   }
-  const t0 = performance.now();
-  const teams = optimize(ids, k, sport, pins, prev ? prev.teams : null);
-  DB.teams[cls] = {k, teams, pins:Object.keys(pins), at:Date.now()};
+  DB.teams[cls] = {k, teams, groups, pins:kept, at:Date.now()};
   sel = null; save(); render();
   const el = $('#results'); if (el && !document.body.classList.contains('present')) el.scrollIntoView({behavior:'smooth', block:'start'});
   console.log('teams made in', Math.round(performance.now() - t0), 'ms');
@@ -704,18 +786,28 @@ function removeFromTeams(id){
   st.teams[t] = st.teams[t].filter(x => x !== id); st.pins = (st.pins || []).filter(x => x !== id);
   return t;
 }
-/** Place a student into the best team (smallest teams only) or a given team. */
+/** Place a student into the best team (smallest teams only) or a given team. In level-split mode they join
+    the group matching their level (Either: the group with the smaller teams). */
 function placeStudent(id, team){
   const st = teamsState(); if (!st) return -1;
   if (teamIndexOf(id, st) >= 0) return teamIndexOf(id, st);
   let t = team;
   if (t == null || t < 0){
-    const ids = st.teams.flat().concat(id);
-    const M = buildModel(ids, st.k, DB.ui.sport);
-    const a = new Int32Array(ids.length); st.teams.forEach((tm, ti) => tm.forEach(x => { a[M.ix.get(x)] = ti; }));
-    const minSize = Math.min(...st.teams.map(x => x.length));
+    let cand = st.teams.map((_, i) => i);
+    if (st.groups){
+      let g = levelPref(SM.get(id), DB.ui.sport);
+      if (g === 'e'){
+        const avg = x => { const ix = groupIdx(st, x); return ix.reduce((a, i) => a + st.teams[i].length, 0) / ix.length; };
+        g = avg('c') <= avg('k') ? 'c' : 'k';
+      }
+      cand = groupIdx(st, g);
+    }
+    const ids = cand.flatMap(i => st.teams[i]).concat(id);
+    const M = buildModel(ids, cand.length, DB.ui.sport);
+    const a = new Int32Array(ids.length); cand.forEach((ti, li) => st.teams[ti].forEach(x => { a[M.ix.get(x)] = li; }));
+    const minSize = Math.min(...cand.map(i => st.teams[i].length));
     let bestC = Infinity;
-    st.teams.forEach((tm, ti) => { if (tm.length !== minSize) return; a[ids.length-1] = ti; const c = M.cost(a); if (c < bestC){ bestC = c; t = ti; } });
+    cand.forEach((ti, li) => { if (st.teams[ti].length !== minSize) return; a[ids.length-1] = li; const c = M.cost(a); if (c < bestC){ bestC = c; t = ti; } });
   }
   st.teams[t].push(id); st.teams[t].sort(byName);
   return t;
@@ -748,7 +840,9 @@ function teamsText(){
   const st = teamsState(); if (!st) return '';
   const sport = DB.ui.sport, ev = evaluate(st, sport);
   const L = [`${DB.ui.cls} · ${sport === OVERALL ? 'Overall' : sport} · ${st.teams.length} teams`, ''];
+  let lastG = null;
   st.teams.forEach((t, ti) => {
+    if (st.groups && st.groups[ti] !== lastG){ lastG = st.groups[ti]; L.push(`== ${LV_NAME[lastG]} ==`, ''); }
     const inf = ev.info[ti], meta = [];
     if (DB.ui.showStrength) meta.push('strength ' + inf.sum);
     if (DB.ui.showGender) meta.push(`${inf.boys}B/${inf.girls}G`);
@@ -756,12 +850,11 @@ function teamsText(){
     t.forEach(id => L.push('  ' + nameOf(id)));
     L.push('');
   });
-  if (DB.ui.showSchedule && [3,4,5].includes(st.teams.length)){
-    L.push('Schedule');
-    roundRobin(st.teams.length).forEach((r, i) => {
-      L.push(`Round ${i+1}: ` + r.games.map((g, c) => `Court ${c+1}: T${g[0]} v T${g[1]}`).join(' · ') + (r.rest.length ? ` · Rest: T${r.rest.join(', T')}` : ''));
-    });
-  }
+  if (DB.ui.showSchedule) scheduleBlocks(st).forEach(b => {
+    L.push(b.title);
+    b.rr.forEach((r, i) => L.push(`Round ${i+1}: ` + r.games.map((g, c) => `Court ${c+1}: T${g[0]+b.off} v T${g[1]+b.off}`).join(' · ') + (r.rest.length ? ` · Rest: ${r.rest.map(x => 'T' + (x + b.off)).join(', ')}` : '')));
+    L.push('');
+  });
   return L.join('\n').trim() + '\n';
 }
 async function copyText(){
@@ -797,17 +890,24 @@ function renderTeamsTab(){
     return `<div class="card empty"><h2>No students yet</h2><p>Upload your Google Form CSV (or paste class lists) in the Data and Students tabs, or try it with fake students.</p>
       <div class="toolbar" style="justify-content:center"><button class="btn primary" data-act="sample">Load sample data (fake names)</button><button class="btn" data-act="tab" data-v="data">Go to Data</button></div></div>`;
   }
-  const studs = classStudents(), abs = absentSet(), k = DB.ui.k;
-  const present = studs.filter(s => !abs.has(s.id)).length;
+  const studs = classStudents(), abs = absentSet(), split = !!DB.ui.split;
+  const kC = DB.ui.kC, kK = DB.ui.kK, k = split ? kC + kK : DB.ui.k;
+  const presentIds = studs.filter(s => !abs.has(s.id)).map(s => s.id), present = presentIds.length;
   const st = teamsState();
+  const ag = split && present >= k ? assignGroups(presentIds, kC, kK, DB.ui.sport) : null;
   const pinsN = st ? (st.pins || []).filter(id => !abs.has(id) && teamIndexOf(id, st) > -1 && teamIndexOf(id, st) < k).length : 0;
-  const base = Math.floor(present / k), ex = present % k;
-  const sizeTxt = present >= k ? (ex ? `${ex} team${ex > 1 ? 's' : ''} of ${base+1}, ${k-ex} of ${base}` : `${k} teams of ${base}`) : 'not enough players';
+  const sizeTxt = split ? (ag ? `${ag.c.length} + ${ag.k.length} players` : 'not enough players') : (present >= k ? sizesText(present, k) : 'not enough players');
+  const seg = (act, cur, list) => `<div class="seg">${list.map(n => `<button data-act="${act}" data-v="${n}" class="${n === cur ? 'on' : ''}">${n}</button>`).join('')}</div>`;
+  const tg = (act, on, label) => `<button class="tog" data-act="${act}" aria-pressed="${on}">${on ? '✓ ' : ''}${label}</button>`;
   return `
   <div class="card setup">
     <div class="row"><span class="lbl">Class</span>${classSeg()}</div>
     <div class="row"><label class="lbl" for="sportSel">Sport</label>${sportSelect('sportSel')}</div>
-    <div class="row"><span class="lbl">Teams</span><div class="seg">${[2,3,4,5,6].map(n => `<button data-act="k" data-v="${n}" class="${n === k ? 'on' : ''}">${n}</button>`).join('')}</div></div>
+    ${split
+      ? `<div class="row"><span class="lbl">Competitive</span>${seg('kc', kC, [2,3,4,5,6])}<span class="small">teams</span></div>
+         <div class="row"><span class="lbl">Casual</span>${seg('kk', kK, [2,3,4,5,6])}<span class="small">teams</span></div>`
+      : `<div class="row"><span class="lbl">Teams</span>${seg('k', DB.ui.k, [2,3,4,5,6])}</div>`}
+    <div class="row"><span class="lbl">Options</span><div class="toggles" style="margin:0">${tg('split', split, 'Split by level')}${tg('geneq', DB.ui.genderEq !== false, 'Even boys/girls')}</div></div>
   </div>
   <div class="card" id="attCard">
     <div class="cardhead"><h2>Who’s playing? <span class="muted">${present}/${studs.length}</span></h2>
@@ -815,8 +915,23 @@ function renderTeamsTab(){
     <p class="hint">Tap a name to mark absent / not playing. Tap again to bring them back.${st ? ' Teams update right away.' : ''}</p>
     <div class="attgrid">${studs.map(s => `<button class="att ${abs.has(s.id) ? 'absent' : ''}" data-act="att" data-id="${s.id}" aria-pressed="${abs.has(s.id)}">${esc(s.name)}${abs.has(s.id) ? '<span class="tagx">absent</span>' : ''}</button>`).join('')}</div>
   </div>
-  <button class="btn-big" data-act="make" ${present < k ? 'disabled' : ''}>Make ${k} teams <span style="font-weight:500;font-size:16px">· ${sizeTxt}${pinsN ? ` · keeping ${pinsN} locked` : ''}</span></button>
+  ${split ? renderLevelCard(ag, kC, kK, present) : ''}
+  <button class="btn-big" data-act="make" ${present < k || (split && ag && !ag.ok) ? 'disabled' : ''}>Make ${k} teams <span style="font-weight:500;font-size:16px">· ${sizeTxt}${pinsN ? ` · keeping ${pinsN} locked` : ''}</span></button>
   <div id="results">${renderResults()}</div>`;
+}
+function renderLevelCard(ag, kC, kK, present){
+  const sport = DB.ui.sport, mv = DB.levelMoves[lvKey()] || {}, nMoves = Object.keys(mv).length;
+  if (!ag) return `<div class="card" id="lvCard"><h2>Level groups</h2><p class="hint">Not enough players for ${kC + kK} teams.</p></div>`;
+  const col = (g, list, kk) => `<div class="lvcol"><h3>${LV_NAME[g]} <span class="muted">${list.length} · ${sizesText(list.length, kk)}</span></h3>
+    <div class="attgrid">${list.slice().sort(byName).map(id => `<button class="att ${ag.either.has(id) ? 'either' : ''} ${mv[id] ? 'moved' : ''}" data-act="lvmove" data-id="${id}" data-to="${g === 'c' ? 'k' : 'c'}" title="Tap to move to ${g === 'c' ? 'Casual' : 'Competitive'}">${esc(nameOf(id))}${ag.either.has(id) ? '<span class="tagx" style="color:var(--muted)">either</span>' : ''}</button>`).join('')}</div></div>`;
+  return `<div class="card" id="lvCard">
+    <div class="cardhead"><h2>Level groups <span class="muted">${ag.counts.c} competitive · ${ag.counts.k} casual · ${ag.counts.e} either</span></h2>
+      ${nMoves ? `<button class="btn-s" data-act="lvreset">Undo ${nMoves} move${nMoves > 1 ? 's' : ''}</button>` : ''}</div>
+    <p class="hint">Based on each student’s answer for <b>${esc(sport === OVERALL ? 'this sport' : sport)}</b>. “Either” students (dashed) fill whichever group needs players. <b>Tap a name to move them to the other group</b>, then press Make teams.</p>
+    ${ag.counts.e === present ? '<div class="warnbox" style="margin:0 0 10px">Nobody has answered competitive/casual for this sport, so everyone is “Either”. The split is by strength, strongest to Competitive.</div>' : ''}
+    ${ag.ok ? '' : `<div class="warnbox" style="margin:0 0 10px"><b>Not enough players in a group</b>: Competitive has ${ag.c.length} for ${kC} teams, Casual has ${ag.k.length} for ${kK}. Move students or change the team counts.</div>`}
+    <div class="lvcols">${col('c', ag.c, kC)}${col('k', ag.k, kK)}</div>
+  </div>`;
 }
 function chip(id, pins){
   const s = SM.get(id), g = gNum(s), str = strengthOf(s, DB.ui.sport);
@@ -826,8 +941,7 @@ function chip(id, pins){
 function renderResults(){
   const st = teamsState(); if (!st) return '';
   const sport = DB.ui.sport, ev = evaluate(st, sport), pins = new Set(st.pins || []);
-  const k = st.teams.length, selTeam = sel ? teamIndexOf(sel, st) : -1;
-  const pcols = k <= 3 ? k : (k === 4 ? 2 : 3);
+  const k = st.teams.length, selTeam = sel ? teamIndexOf(sel, st) : -1, sched = scheduleBlocks(st);
   const tg = (key, label) => `<button class="tog" data-act="toggle" data-v="${key}" aria-pressed="${!!DB.ui[key]}">${DB.ui[key] ? '✓ ' : ''}${label}</button>`;
   const date = new Date().toLocaleDateString(undefined, {weekday:'short', month:'short', day:'numeric'});
   let h = `
@@ -838,14 +952,18 @@ function renderResults(){
     <button class="btn" data-act="print">Print</button>
     <button class="btn" data-act="present">Projector view</button>
   </div>
-  <div class="toggles">${tg('showStrength', 'Strength')}${tg('showGender', 'Boys/Girls')}${tg('showNotes', 'Friend report')}${[3,4,5].includes(k) ? tg('showSchedule', 'Schedule') : ''}
+  <div class="toggles">${tg('showStrength', 'Strength')}${tg('showGender', 'Boys/Girls')}${tg('showNotes', 'Friend report')}${sched.length ? tg('showSchedule', 'Schedule') : ''}
     ${pins.size ? `<button class="tog" data-act="unlockall">🔓 Unlock all (${pins.size})</button>` : ''}</div>
   <p class="hint no-print">Tap a name to select it, then tap another name to <b>swap</b>, or <b>Move here</b> on a team. On a computer you can also drag. 🔒 Locked students stay on their team when you shuffle.</p>
-  <h2 class="restitle">${esc(DB.ui.cls)} · ${esc(sport === OVERALL ? 'Overall' : sport)}<span class="print-only print-inline" style="font-weight:400;font-size:12pt"> · ${esc(date)}</span></h2>
-  <div class="teams" style="--pcols:${pcols}">`;
-  st.teams.forEach((t, ti) => {
-    const inf = ev.info[ti], allPinned = t.length && t.every(id => pins.has(id));
-    h += `<div class="team" data-team="${ti}">
+  <h2 class="restitle">${esc(DB.ui.cls)} · ${esc(sport === OVERALL ? 'Overall' : sport)}<span class="print-only print-inline" style="font-weight:400;font-size:12pt"> · ${esc(date)}</span></h2>`;
+  const blocks = st.groups ? ['c', 'k'].map(g => ({g, idx:groupIdx(st, g)})) : [{g:null, idx:st.teams.map((_, i) => i)}];
+  blocks.forEach(b => {
+    const pcols = b.idx.length <= 3 ? b.idx.length : (b.idx.length === 4 ? 2 : 3);
+    if (b.g) h += `<h3 class="grphead">${LV_NAME[b.g]} <span class="muted">· ${b.idx.length} teams · ${b.idx.reduce((a, i) => a + st.teams[i].length, 0)} players</span></h3>`;
+    h += `<div class="teams" style="--pcols:${pcols}">`;
+    b.idx.forEach(ti => {
+      const t = st.teams[ti], inf = ev.info[ti], allPinned = t.length && t.every(id => pins.has(id));
+      h += `<div class="team" data-team="${ti}">
       <div class="thead"><h3>Team ${ti+1}</h3>
         <div class="tmeta"><span>${inf.size} players</span>${DB.ui.showStrength ? `<span class="str">Strength ${inf.sum}</span>` : ''}${DB.ui.showGender ? `<span>${inf.boys}B · ${inf.girls}G${inf.other ? ` · ${inf.other}–` : ''}</span>` : ''}</div>
         ${sel && selTeam !== ti ? `<button class="movehere no-print" data-act="movehere" data-team="${ti}">Move ${esc(nameOf(sel).split(' ')[0])} here</button>` : ''}
@@ -853,13 +971,14 @@ function renderResults(){
       <ol class="plist">${t.map(id => chip(id, pins)).join('')}</ol>
       <div class="tfoot"><button class="btn-s" data-act="lockteam" data-team="${ti}">${allPinned ? '🔓 Unlock team' : '🔒 Lock team'}</button></div>
     </div>`;
+    });
+    h += `</div>`;
   });
-  h += `</div>`;
   if (DB.ui.showNotes){
     h += `<div class="report">`;
     h += ev.elig ? `<div class="okline">${ev.got}/${ev.elig} got a friend</div>` : `<div class="small">No friend requests among today’s players.</div>`;
-    if (DB.ui.showStrength) h += ` <span class="small" style="margin-left:8px">Strength spread: ${ev.spread} (${ev.minSum}–${ev.maxSum})</span>`;
-    if (ev.missed.length) h += `<p style="margin:8px 0 0"><b>Didn’t get a friend:</b> ${ev.missed.map(nameOf).map(esc).join(', ')}</p>`;
+    if (DB.ui.showStrength) h += ` <span class="small" style="margin-left:8px">Strength spread: ${ev.groupStats.map(g => `${g.g === 'a' ? '' : LV_NAME[g.g] + ' '}${g.spread} (${g.minSum}–${g.maxSum})`).join(' · ')}</span>`;
+    if (ev.missed.length) h += `<p style="margin:8px 0 0"><b>Didn’t get a friend:</b> ${ev.missed.map(id => esc(nameOf(id)) + (ev.otherLevel.includes(id) ? ' <span class="small">(friends are in the other level)</span>' : '')).join(', ')}</p>`;
     const extra = [];
     if (ev.noneHere.length) extra.push(`${ev.noneHere.length} had none of their friends here today (${ev.noneHere.map(nameOf).map(esc).join(', ')})`);
     if (ev.noReq.length) extra.push(`${ev.noReq.length} didn’t list friends`);
@@ -867,12 +986,14 @@ function renderResults(){
     if (ev.warnings.length) h += `<div class="warnbox"><b>Heads up</b><ul>${ev.warnings.map(w => `<li>${esc(w)}</li>`).join('')}</ul></div>`;
     h += `</div>`;
   }
-  if (DB.ui.showSchedule && [3,4,5].includes(k)){
-    const rr = roundRobin(k), courts = Math.max(...rr.map(r => r.games.length)), rests = rr.some(r => r.rest.length);
-    h += `<div class="sched-wrap"><h3 style="margin:16px 0 6px">Round-robin (${courts} court${courts > 1 ? 's' : ''})</h3>
+  if (DB.ui.showSchedule && sched.length){
+    h += `<div class="sched-wrap">` + sched.map(b => {
+      const courts = Math.max(...b.rr.map(r => r.games.length)), rests = b.rr.some(r => r.rest.length), nm = x => 'Team ' + (x + b.off);
+      return `<h3 style="margin:16px 0 6px">${b.title} (${courts} court${courts > 1 ? 's' : ''})</h3>
       <table class="sched"><thead><tr><th>Round</th>${Array.from({length:courts}, (_, c) => `<th>Court ${c+1}</th>`).join('')}${rests ? '<th>Resting</th>' : ''}</tr></thead><tbody>
-      ${rr.map((r, i) => `<tr><td><b>${i+1}</b></td>${Array.from({length:courts}, (_, c) => `<td>${r.games[c] ? `Team ${r.games[c][0]} vs Team ${r.games[c][1]}` : ''}</td>`).join('')}${rests ? `<td>${r.rest.map(x => 'Team ' + x).join(', ')}</td>` : ''}</tr>`).join('')}
-      </tbody></table></div>`;
+      ${b.rr.map((r, i) => `<tr><td><b>${i+1}</b></td>${Array.from({length:courts}, (_, c) => `<td>${r.games[c] ? `${nm(r.games[c][0])} vs ${nm(r.games[c][1])}` : ''}</td>`).join('')}${rests ? `<td>${r.rest.map(nm).join(', ')}</td>` : ''}</tr>`).join('')}
+      </tbody></table>`;
+    }).join('') + `</div>`;
   }
   return h;
 }
@@ -951,6 +1072,7 @@ function renderDataTab(){
     <ul class="report-list">
       <li>${r.rows} response rows read${r.skipped ? `, ${r.skipped} blank skipped` : ''}${r.dupes ? `, <b>${r.dupes} duplicate submission${r.dupes > 1 ? 's' : ''}</b> (latest kept)` : ''}</li>
       <li>${r.updated} existing students updated, ${r.added.length} new${r.added.length ? `: ${r.added.map(esc).join(', ')}` : ''}</li>
+      ${r.levelCols ? `<li>Competitive/casual answers found for ${r.levelCols} sport${r.levelCols > 1 ? 's' : ''}</li>` : ''}
       <li>Sports found: ${r.sports.length ? r.sports.map(esc).join(', ') : '<b>none</b>. Check the rating columns.'}</li>
       ${r.fuzzy.length ? `<li>Names matched despite spelling: ${r.fuzzy.map(([a, b]) => `“${esc(a)}” → ${esc(b)}`).join(', ')}</li>` : ''}
       ${r.unmatched.length ? `<li style="color:var(--warn)">Friend / not-with names not found: ${r.unmatched.map(esc).join(', ')}</li>` : ''}
@@ -984,7 +1106,7 @@ function openAddLate(){
   const inTeams = new Set(st.teams.flat());
   const avail = classStudents().filter(s => !inTeams.has(s.id));
   openDialog(`<div class="dlg"><h2>Add a student to the teams</h2>
-    <div class="row"><label for="lateTeam"><b>Put on</b></label><select id="lateTeam" style="min-width:160px"><option value="-1">Best fit (auto)</option>${st.teams.map((_, i) => `<option value="${i}">Team ${i+1}</option>`).join('')}</select></div>
+    <div class="row"><label for="lateTeam"><b>Put on</b></label><select id="lateTeam" style="min-width:160px"><option value="-1">Best fit (auto)</option>${st.teams.map((_, i) => `<option value="${i}">Team ${i+1}${st.groups ? ' (' + LV_NAME[st.groups[i]] + ')' : ''}</option>`).join('')}</select></div>
     ${avail.length ? `<p class="hint">Tap a student who just arrived:</p><div class="pickgrid">${avail.map(s => `<button class="att" data-act="lateadd" data-id="${s.id}">${esc(s.name)}</button>`).join('')}</div>` : '<p class="hint">Everyone in this class is already on a team.</p>'}
     <p class="hint" style="margin-top:4px">New to the class?</p>
     <div class="inline"><input type="text" id="lateName" placeholder="Full name" style="flex:1;min-width:160px"><div class="seg sm" id="lateG">${[['b','B'],['g','G'],['','–']].map(([v, l]) => `<button data-act="lateg" data-v="${v}" class="${v === '' ? 'on' : ''}">${l}</button>`).join('')}</div>
@@ -1006,6 +1128,12 @@ document.addEventListener('click', async e => {
       DB.absent[DB.ui.cls] = [];
       if (st) back.forEach(x => placeStudent(x));
       save(); render(); break; }
+    case 'split': DB.ui.split = !DB.ui.split; save(); render(); break;
+    case 'geneq': DB.ui.genderEq = DB.ui.genderEq === false; save(); render(); toast(DB.ui.genderEq ? 'Even boys/girls: on' : 'Even boys/girls: off (gender ignored)'); break;
+    case 'kc': DB.ui.kC = +v; save(); render(); break;
+    case 'kk': DB.ui.kK = +v; save(); render(); break;
+    case 'lvmove': { const mv = DB.levelMoves[lvKey()] = DB.levelMoves[lvKey()] || {}; mv[id] = el.dataset.to; save(); render(); break; }
+    case 'lvreset': delete DB.levelMoves[lvKey()]; save(); render(); break;
     case 'make': generate(); break;
     case 'chip': {
       if (!sel){ sel = id; }
@@ -1141,7 +1269,8 @@ function loadSample(){
   const head = ['Timestamp','Class','Your name (8A)','Your name (8B)','Gender (optional)',
     ...sports.map(s => `How good are you at each? [${s}]`),
     'Pick up to 6 friends you’d like on your team (8A)','Pick up to 6 friends you’d like on your team (8B)',
-    'Anyone you’d rather NOT be on a team with? (8A)','Anyone you’d rather NOT be on a team with? (8B)','Anything else your teacher should know? (optional)'];
+    'Anyone you’d rather NOT be on a team with? (8A)','Anyone you’d rather NOT be on a team with? (8B)','Anything else your teacher should know? (optional)',
+    ...sports.map(s => `If there is an option, would you prefer to play a casual, more friendly game, or a more competitive game with more competitive rules? [${s}]`)];
   const q = v => /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
   const lines = [head.map(q).join(',')];
   const label = r => r === 0 ? 'Rather not play' : r === 1 ? '1 - New to it' : r === 5 ? '5 - Very strong' : String(r);
@@ -1154,12 +1283,13 @@ function loadSample(){
     const nf = 1 + Math.floor(R() * 6);
     let friends = pick(same, Math.min(same.length, Math.ceil(nf * 0.7))).concat(pick(diff, Math.floor(nf * 0.3))).slice(0, 6).map(x => x[0]);
     if (opts.friends) friends = opts.friends;
+    const lv = sports.map((_, i) => { const x = ratings[i] === 0 ? 1 : ratings[i], r = R(); return x >= 4 ? (r < .6 ? 'Competitive' : r < .85 ? 'Either' : 'Casual') : x <= 2 ? (r < .6 ? 'Casual' : r < .85 ? 'Either' : 'Competitive') : (r < .35 ? 'Competitive' : r < .7 ? 'Casual' : 'Either'); });
     const gtxt = g === 'b' ? 'Boy' : g === 'g' ? 'Girl' : 'Prefer not to say';
     minute += 1 + Math.floor(R() * 9);
     const ts = `11/${opts.day || 18}/2026 ${8 + Math.floor(minute / 60)}:${String(minute % 60).padStart(2, '0')}:${String(Math.floor(R() * 60)).padStart(2, '0')}`;
     const isA = cls === '8A';
     const row = [ts, opts.cls || cls, isA ? (opts.as || name) : '', isA ? '' : (opts.as || name), gtxt, ...ratings.map(label),
-      isA ? friends.join(', ') : '', isA ? '' : friends.join(', '), isA ? (opts.avoid || '') : '', isA ? '' : (opts.avoid || ''), opts.note || ''];
+      isA ? friends.join(', ') : '', isA ? '' : friends.join(', '), isA ? (opts.avoid || '') : '', isA ? '' : (opts.avoid || ''), opts.note || '', ...lv];
     lines.push(row.map(q).join(','));
   };
   // 8A: Daisy Mbeki and Wyatt Brooks didn't fill in the form (they come from the class list).

@@ -30,7 +30,7 @@ Write every name as **First Last** (no commas), exactly the same as in your clas
 6. **Gender (optional)** *(multiple choice)*: `Boy`, `Girl`, `Prefer not to say`
 7. **How good are you at each sport or game?** *(multiple-choice grid, "Require a response in each row" on)*
    - **Columns:** `1 - New to it`, `2`, `3 - Okay / not sure`, `4`, `5 - Very strong`
-   - **Rows** (suggested list; delete any you never play):
+   - **Rows** (suggested list; delete any you never play). Don't leave a stray or misspelled row. A row named just `B`, for example, is ignored by the tool but clutters the form:
      - Basketball
      - Volleyball
      - Soccer
@@ -47,7 +47,11 @@ Write every name as **First Last** (no commas), exactly the same as in your clas
      - Lacrosse
      - Tchoukball
      - Capture the Flag
-8. **Anything else your teacher should know? (optional)** *(paragraph)*: e.g. injuries, asthma, "I'm new to this sport".
+8. **Competitive or casual?** *(multiple-choice grid, "Require a response in each row" off)*
+   - Title (any wording works as long as it contains "casual" or "competitive"), e.g. *"If there is an option, would you prefer to play a casual, more friendly game, or a more competitive game with more competitive rules?"*
+   - **Columns:** `Competitive`, `Casual`, `Either`
+   - **Rows:** the same sports as the skill grid in #7 (use the same names)
+9. **Anything else your teacher should know? (optional)** *(paragraph)*: e.g. injuries, asthma, "I'm new to this sport".
 
 Dropdowns also work for friends instead of checkboxes ("Friend 1" … "Friend 6", six dropdowns). The tool reads any column with "friend" in the title.
 
@@ -64,6 +68,7 @@ You can re-export and re-import any time, for example after late responses. Your
 | In the CSV | How it's used |
 |---|---|
 | Ratings 1–5 | Strength for that sport |
+| Competitive / Casual / Either per sport | Used by **Split by level**. Blank or no form = Either. |
 | No rating / didn't do the form | Their average rating across sports, or 3 if none. Change it in **Students & rules**. |
 | Misspelled names | Matched to your pasted class list. The import report shows each match. |
 | Duplicate submissions | Latest timestamp wins |

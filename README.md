@@ -24,6 +24,17 @@ Balanced gym teams in seconds, made for a phone or a projector. **Everything is 
 - **Copy as text** and **Print** (one page; includes the 2-court round-robin for 3, 4 or 5 teams).
 - 8A and 8B keep their own teams and attendance, so you can switch back and forth.
 
+## Split by level (competitive / casual)
+Turn on **Split by level** on the Teams tab, then pick how many teams go to **Competitive** and how many to **Casual** (e.g. 2 + 4).
+- Each student's answer for the chosen sport decides their group. **Either** (or no answer) fills whichever group is short, strongest Either players to Competitive first.
+- The **Level groups** card previews the split. **Tap a name to move them** to the other group before pressing Make teams. Moves are saved per class and sport; "Undo moves" clears them.
+- Each group is balanced separately with the same rules. Level comes before friends, so a friend in the other group is noted in the friend report.
+- Round-robin schedules are per group (groups of 3–6 teams).
+- If a group doesn't have enough players, the tool says so rather than choosing for you. Change the team counts or move students.
+
+## Even boys/girls toggle
+**Even boys/girls** (Teams tab) switches the boy/girl balancing on or off. When on, each team gets at least 2 boys and 2 girls when numbers allow, lowered automatically when fewer are present. When off, gender is ignored.
+
 ## How teams are balanced (in priority order)
 1. Team sizes as even as possible (hard rule).
 2. Teacher "always together" / "keep apart" rules.
