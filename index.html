@@ -144,16 +144,22 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
 .kbd{font-family:ui-monospace,monospace;font-size:14px;background:var(--soft);padding:1px 5px;border-radius:5px}
 /* Projector mode */
 body.present header, body.present .setup, body.present #attCard, body.present #lvCard, body.present .btn-big, body.present .toolbar, body.present .tfoot, body.present #tab-students, body.present #tab-data, body.present #tab-help, body.present .toggles{display:none!important}
-body.present main{max-width:none;padding:16px 24px 40px}
+body.present main{max-width:none;padding:10px 24px 20px}
 .more-tools{margin:36px 0 0;padding-top:14px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:4px 14px;justify-content:center;font-size:13px;color:var(--muted)}
 .more-tools a{color:var(--muted);text-underline-offset:3px}
 .more-tools a:hover{color:var(--accent)}
 body.present .more-tools{display:none}
-body.present .restitle{font-size:34px;text-align:center}
-body.present .grphead{font-size:30px}
-body.present .thead h3{font-size:34px}
+body.present .restitle{font-size:calc(min(34px,4.6vh) * var(--pz,1));text-align:center;margin:0 0 4px}
+body.present .grphead{font-size:calc(min(30px,4vh) * var(--pz,1));margin:min(14px,1.6vh) 0 4px}
+/* Projector view: just team names and players */
+body.present .sv, body.present .g, body.present .lock, body.present .tmeta, body.present .report, body.present .hint,
+body.present .movehere, body.present #actionbar, body.present .more-tools, body.present .grphead .muted{display:none!important}
+body.present .p{pointer-events:none;cursor:default;background:none}
+body.present .thead{border-bottom:2px solid var(--line);padding-bottom:6px}
+body.present.nosched .sched-wrap{display:none}
+body.present .thead h3{font-size:calc(min(34px,4.6vh) * var(--pz,1))}
 body.present .tmeta{font-size:20px}
-body.present .p{font-size:28px;min-height:52px}
+body.present .p{font-size:calc(min(28px,3.5vh) * var(--pz,1));min-height:calc(min(52px,5.4vh) * var(--pz,1));margin:1px 0;padding-top:0;padding-bottom:0}
 body.present .exitpresent{display:block;position:fixed;top:10px;right:10px;z-index:50;opacity:.5}
 body.present .exitpresent:hover{opacity:1}
 @media (max-width:520px){
@@ -906,7 +912,21 @@ function render(){
   if (DB.ui.tab === 'data') $('#tab-data').innerHTML = renderDataTab();
   if (DB.ui.tab === 'help') $('#tab-help').innerHTML = renderHelpTab();
   renderActionBar();
+  fitProjector();
 }
+/** Projector view: shrink the text step by step until all teams fit on one screen. */
+function fitProjector(){
+  const de = document.documentElement;
+  const bd = document.body;
+  if (!bd.classList.contains('present')){ de.style.removeProperty('--pz'); bd.classList.remove('nosched'); return; }
+  const shrink = () => { let z = 1; de.style.setProperty('--pz', z);
+    while (de.scrollHeight > window.innerHeight + 2 && z > 0.4){ z = Math.round((z - 0.05) * 100) / 100; de.style.setProperty('--pz', z); }
+    return z; };
+  bd.classList.remove('nosched');
+  // the schedule is only shown if team names can stay a readable size with it
+  if (shrink() < 0.7){ bd.classList.add('nosched'); shrink(); }
+}
+window.addEventListener('resize', fitProjector);
 function classSeg(){
   return `<div class="seg">${DB.classes.map(c => `<button data-act="cls" data-v="${esc(c)}" class="${c === DB.ui.cls ? 'on' : ''}">${esc(c)} <small>${DB.students.filter(s => s.cls === c).length}</small></button>`).join('')}</div>`;
 }
