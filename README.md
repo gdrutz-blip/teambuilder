@@ -35,6 +35,9 @@ Turn on **Split by level** on the Teams tab, then pick how many teams go to **Co
 ## Even boys/girls toggle
 **Even boys/girls** (Teams tab) switches the boy/girl balancing on or off. When on, each team gets at least 2 boys and 2 girls when numbers allow, lowered automatically when fewer are present. When off, gender is ignored.
 
+## Help tab, classes and sharing
+The **Help** tab inside the tool explains how to build the form and use the tool, so colleagues can use the Pages link without seeing the repo. Classes come from the form's Class answers and can be added, renamed or removed under **Data → Classes**. **Data → Download sample CSV** shows the expected format. To show a "make a copy" button for a template form, paste its link into `FORM_TEMPLATE_URL` near the top of `index.html`.
+
 ## Short friend lists
 A student who lists only 1 or 2 friends has their request honoured on about 60% / 85% of shuffles (instead of every time), so they aren't paired with the same person every day. Lists of 3 or more always count in full. The change is the `LIGHT_P` setting in `index.html`.
 

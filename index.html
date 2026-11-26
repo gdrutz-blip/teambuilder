@@ -88,6 +88,10 @@ textarea{width:100%;min-height:130px;font-family:inherit}
 .lock{font-size:15px}
 .tfoot{display:flex;justify-content:flex-end;padding-top:6px}
 .report{margin-top:14px}
+.helplist{margin:6px 0 10px;padding-left:22px}
+.helplist li{margin:6px 0}
+table.helptbl{max-width:none;font-size:15px;margin:8px 0}
+table.helptbl td,table.helptbl th{vertical-align:top}
 .grphead{font-size:22px;margin:18px 0 8px}
 .grphead:first-of-type{margin-top:6px}
 .lvcols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
@@ -139,7 +143,7 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
 .report-list{margin:4px 0;padding-left:20px}
 .kbd{font-family:ui-monospace,monospace;font-size:14px;background:var(--soft);padding:1px 5px;border-radius:5px}
 /* Projector mode */
-body.present header, body.present .setup, body.present #attCard, body.present #lvCard, body.present .btn-big, body.present .toolbar, body.present .tfoot, body.present #tab-students, body.present #tab-data, body.present .toggles{display:none!important}
+body.present header, body.present .setup, body.present #attCard, body.present #lvCard, body.present .btn-big, body.present .toolbar, body.present .tfoot, body.present #tab-students, body.present #tab-data, body.present #tab-help, body.present .toggles{display:none!important}
 body.present main{max-width:none;padding:16px 24px 40px}
 .more-tools{margin:36px 0 0;padding-top:14px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:4px 14px;justify-content:center;font-size:13px;color:var(--muted)}
 .more-tools a{color:var(--muted);text-underline-offset:3px}
@@ -162,7 +166,7 @@ body.present .exitpresent:hover{opacity:1}
   @page{margin:10mm}
   :root{--ink:#000;--muted:#333;--line:#999;--card:#fff;--bg:#fff;--soft:#eee;--accent:#000}
   body{background:#fff;color:#000;font-size:11pt}
-  header,.no-print,.setup,#attCard,#lvCard,.btn-big,.toolbar,.toggles,#actionbar,#toast,#tab-students,#tab-data,.exitpresent,dialog{display:none!important}
+  header,.no-print,.setup,#attCard,#lvCard,.btn-big,.toolbar,.toggles,#actionbar,#toast,#tab-students,#tab-data,#tab-help,.exitpresent,dialog{display:none!important}
   main{padding:0;max-width:none}
   .print-only{display:block}
   .print-inline{display:inline!important}
@@ -193,6 +197,7 @@ body.present .exitpresent:hover{opacity:1}
       <button data-act="tab" data-v="teams">Teams</button>
       <button data-act="tab" data-v="students">Students &amp; rules</button>
       <button data-act="tab" data-v="data">Data</button>
+      <button data-act="tab" data-v="help">Help</button>
     </nav>
   </div>
 </header>
@@ -200,6 +205,7 @@ body.present .exitpresent:hover{opacity:1}
   <section id="tab-teams"></section>
   <section id="tab-students"></section>
   <section id="tab-data"></section>
+  <section id="tab-help"></section>
   <!-- Links to the other tools. A fixed list on purpose: this page makes no network requests.
        Keep in step with https://gdrutz-blip.github.io/random/tools.json -->
   <footer class="more-tools no-print">
@@ -222,6 +228,8 @@ body.present .exitpresent:hover{opacity:1}
    All data lives in this browser's localStorage under LS_KEY.
    ========================================================================== */
 const LS_KEY = 'gymTeams.v1';
+/* Paste the "make a copy" link of your template Google Form here and the Help tab will show a button for it. */
+const FORM_TEMPLATE_URL = '';
 const OVERALL = 'Overall (average of all sports)';
 const DEFAULT_SPORTS = ['Basketball','Volleyball','Soccer','Floor Hockey','Badminton','Dodgeball','Ultimate Frisbee','Team Handball','Softball','Track & Field','Flag Football','Kickball','Pickleball','Lacrosse','Tchoukball','Capture the Flag'];
 const SPORT_ALIASES = {
@@ -243,10 +251,10 @@ function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=rnd(i+1); [a[i],a[j]
 /* ----------------------------- Storage ---------------------------------- */
 function freshDB(){
   return {
-    v:1, nextId:1, classes:['8A','8B'], sports:DEFAULT_SPORTS.slice(), students:[],
+    v:1, nextId:1, classes:[], sports:DEFAULT_SPORTS.slice(), students:[],
     rules:{together:[], apart:[], strength:{}},
     absent:{}, teams:{}, lastImport:null, levelMoves:{},
-    ui:{cls:'8A', sport:'Basketball', k:4, split:false, kC:2, kK:2, genderEq:true, showStrength:true, showGender:true, showNotes:true, showSchedule:true, tab:'teams'}
+    ui:{cls:'', sport:'Basketball', k:4, split:false, kC:2, kK:2, genderEq:true, showStrength:true, showGender:true, showNotes:true, showSchedule:true, tab:'teams'}
   };
 }
 let DB, SM = new Map(), sel = null, drag = null, suppressClick = false;
@@ -257,8 +265,9 @@ function load(){
   DB = Object.assign(f, d || {});
   DB.ui = Object.assign(freshDB().ui, (d && d.ui) || {});
   DB.rules = Object.assign({together:[], apart:[], strength:{}}, (d && d.rules) || {});
-  reindex();
+  reindex(); ensureClass();
 }
+function ensureClass(){ if (!DB.classes.includes(DB.ui.cls)) DB.ui.cls = DB.classes[0] || ''; }
 function save(){
   try { localStorage.setItem(LS_KEY, JSON.stringify(DB)); }
   catch(e){ toast('Could not save. Browser storage may be blocked or full.'); }
@@ -453,7 +462,7 @@ function importCSV(text, fallbackCls){
   for (const rec of recs){
     if (!rec.cls){
       const m = matchName(rec.name, DB.students, s => s.fromRoster);
-      rec.cls = m ? m.s.cls : fallbackCls; rep.noClass++;
+      rec.cls = m ? m.s.cls : (fallbackCls || 'Class 1'); rep.noClass++;
     }
     if (!DB.classes.includes(rec.cls)) DB.classes.push(rec.cls);
     const cands = DB.students.filter(s => s.cls === rec.cls);
@@ -891,10 +900,11 @@ async function copyText(){
 /* ------------------------------ Rendering ------------------------------- */
 function render(){
   document.querySelectorAll('#nav button').forEach(b => b.classList.toggle('on', b.dataset.v === DB.ui.tab));
-  ['teams','students','data'].forEach(t => { $('#tab-' + t).hidden = DB.ui.tab !== t; });
+  ['teams','students','data','help'].forEach(t => { $('#tab-' + t).hidden = DB.ui.tab !== t; });
   if (DB.ui.tab === 'teams') $('#tab-teams').innerHTML = renderTeamsTab();
   if (DB.ui.tab === 'students') $('#tab-students').innerHTML = renderStudentsTab();
   if (DB.ui.tab === 'data') $('#tab-data').innerHTML = renderDataTab();
+  if (DB.ui.tab === 'help') $('#tab-help').innerHTML = renderHelpTab();
   renderActionBar();
 }
 function classSeg(){
@@ -1028,6 +1038,7 @@ function renderActionBar(){
     <button class="btn" data-act="desel">Done</button></div>`;
 }
 function renderStudentsTab(){
+  if (!DB.classes.length) return `<div class="card empty"><h2>No classes yet</h2><p>Import your form’s CSV, or add a class under Data → Classes.</p><button class="btn primary" data-act="tab" data-v="data">Go to Data</button></div>`;
   const studs = classStudents(), sport = DB.ui.sport, cls = DB.ui.cls;
   const opts = studs.map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join('');
   const pairList = (list, kind) => {
@@ -1081,7 +1092,7 @@ function renderDataTab(){
   <div class="card">
     <h2>Import Google Form responses</h2>
     <p class="hint">In Google Sheets: File → Download → Comma-separated values (.csv). Upload it here. You can re-import anytime; for each student the latest response wins, and your rules and overrides are kept.</p>
-    <div class="row"><span class="lbl" style="min-width:auto">Rows with no class go to</span>${classSeg()}</div>
+    ${DB.classes.length ? `<div class="row"><span class="lbl" style="min-width:auto">Rows with no class go to</span>${classSeg()}</div>` : '<p class="small">Classes are created automatically from the form’s Class answers.</p>'}
     <div class="toolbar"><label class="btn primary" style="display:inline-flex;align-items:center">Choose CSV file…<input type="file" id="csvFile" accept=".csv,.tsv,text/csv,text/plain" data-chg="csvfile" hidden></label></div>
     <details><summary style="cursor:pointer;min-height:44px;display:flex;align-items:center">…or paste CSV text</summary>
       <textarea id="csvText" placeholder="Paste the CSV here"></textarea>
@@ -1099,9 +1110,17 @@ function renderDataTab(){
       ${r.noClass ? `<li>${r.noClass} rows had no class and were placed by name match or default.</li>` : ''}
     </ul></div>` : ''}
   <div class="card">
+    <h2>Classes</h2>
+    <p class="hint">Classes appear automatically from the form’s Class question. You can also add, rename or remove them here. (A rename only changes the label here; the next import uses whatever the form says.)</p>
+    ${DB.classes.length ? DB.classes.map(c => `<div class="srow"><div class="sname"><b>${esc(c)}</b> <span class="small">${DB.students.filter(x => x.cls === c).length} students</span></div>
+      <div class="sctl"><button class="btn-s" data-act="clsrename" data-c="${esc(c)}">Rename</button><button class="btn-s" data-act="clsdelete" data-c="${esc(c)}" style="color:var(--bad)">Remove</button></div></div>`).join('') : '<p class="small">No classes yet.</p>'}
+    <div class="inline" style="margin-top:10px"><input type="text" id="newClass" placeholder="New class name, e.g. 7C" aria-label="New class name" style="flex:1;min-width:180px"><button class="btn" data-act="clsadd">Add class</button></div>
+  </div>
+  <div class="card">
     <h2>Try it out</h2>
-    <p class="hint">Loads 30 fake students in 8A and 28 in 8B (with a few messy form rows). <b>This replaces all current data.</b></p>
-    <button class="btn" data-act="sample">Load sample data</button>
+    <p class="hint">Loads 30 fake students in 8A and 28 in 8B (with a few messy form rows). <b>This replaces all current data</b> in this browser.</p>
+    <div class="toolbar"><button class="btn" data-act="sample">Load sample data</button><button class="btn" data-act="samplecsv">Download sample CSV</button></div>
+    <p class="small">The sample CSV shows the exact format a Google Form export has, with fake names.</p>
   </div>
   <div class="card">
     <h2>Backup</h2>
@@ -1113,6 +1132,78 @@ function renderDataTab(){
     <h2>Privacy</h2>
     <p class="hint">This page makes no network requests (it is locked down so it can’t). Names are stored only in this browser’s local storage.</p>
     <button class="btn danger" data-act="clearall">Clear all data</button>
+  </div>`;
+}
+
+function renderHelpTab(){
+  return `
+  <div class="card">
+    <h2>Gym Team Maker: how it works</h2>
+    <p class="hint">Students fill in a Google Form once. You download the answers as a CSV, load it here, and make fair teams in seconds. This page makes no network requests, and all names stay in your browser.</p>
+    <ol class="helplist">
+      <li><b>Get the form.</b> ${FORM_TEMPLATE_URL ? `<a class="btn primary" style="display:inline-flex;align-items:center;margin:2px 0" href="${esc(FORM_TEMPLATE_URL)}" target="_blank" rel="noopener">Make a copy of the template form</a> and fill in your class lists, or build it yourself from the list below.` : 'Build it from the list below.'}</li>
+      <li><b>Send students the form link</b> (Send → link). Ask them to pick 4–6 friends.</li>
+      <li><b>Optional but recommended:</b> paste each class list under <i>Students &amp; rules → Class list</i>. Students who skip the form still appear, and misspelled names get matched.</li>
+      <li><b>Download the answers.</b> In the form: Responses → Link to Sheets, then in the Sheet File → Download → CSV.</li>
+      <li><b>Load them</b> under <i>Data → Choose CSV file</i>. Read the “Last import” report for anything that didn’t match.</li>
+      <li><b>Make teams</b> on the Teams tab: pick class, sport and number of teams, tap anyone who’s absent, press Make teams.</li>
+    </ol>
+    <div class="toolbar"><button class="btn" data-act="samplecsv">Download a sample CSV</button><button class="btn" data-act="sample">Try with sample data</button></div>
+  </div>
+  <div class="card">
+    <h2>Building the form</h2>
+    <p class="hint">The tool finds columns by key words in the question titles, so you can word things your own way as long as the key word is in the title.</p>
+    <table class="sched helptbl"><thead><tr><th>Question</th><th>Type</th><th>Title must contain</th></tr></thead><tbody>
+      <tr><td>Class</td><td>Multiple choice (required)</td><td>“Class” at the start</td></tr>
+      <tr><td>Your name, one per class</td><td>Dropdown (required)</td><td>“name”</td></tr>
+      <tr><td>Friends, one per class</td><td>Checkboxes, “select at most 6”</td><td>“friend”</td></tr>
+      <tr><td>Gender (optional)</td><td>Multiple choice: Boy / Girl / Prefer not to say</td><td>“gender”</td></tr>
+      <tr><td>Skill</td><td>Multiple-choice grid. Rows = sports, columns = <i>1 - New to it, 2, 3 - Okay / Not sure, 4, 5 - Very strong</i></td><td>anything without “casual” / “competitive”</td></tr>
+      <tr><td>Level</td><td>Multiple-choice grid, same sport rows. Columns = <i>Competitive, Casual, Either</i></td><td>“casual” or “competitive”</td></tr>
+      <tr><td>Notes (optional)</td><td>Paragraph</td><td>“anything else”, “note” or “comment”</td></tr>
+    </tbody></table>
+    <h3>One form for several classes</h3>
+    <ol class="helplist">
+      <li>Make <b>Section 1</b> with the Class question (a choice for each class).</li>
+      <li>Add a section per class, each with its own <i>name</i> and <i>friends</i> dropdowns (paste that class’s names, one per line, using “Add options in bulk”).</li>
+      <li><b>Important:</b> on the Class question, click ⋮ → <b>Go to section based on answer</b> and send each class to its own section. At the end of each class section, set “After section” to go to the final <i>About you</i> section. Without this, students pass through every class’s name list.</li>
+      <li>Put Gender, the two grids and the notes box in the final section.</li>
+    </ol>
+    <h3>Tips</h3>
+    <ul class="helplist">
+      <li>Use the <b>same sport names</b> in both grids, and make sure the list covers every sport you might play (adding one later means re-surveying).</li>
+      <li>Names must be <b>unique within a class</b>. If two students share a first name, use “Sam K” and “Sam T”.</li>
+      <li>Use the same spelling in the form’s dropdowns and in your class list here.</li>
+      <li>Turn on <b>Allow response editing</b> in the form’s settings so students can fix mistakes. If a student submits twice, the latest answer wins.</li>
+      <li>Add a short description at the top of the form: only the teacher sees the answers, they help make fair teams, and “choose 4–6 friends”.</li>
+      <li>Never share your real form or its responses with other teachers. Share a <b>template copy</b> with no responses and fake names.</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h2>Using it</h2>
+    <ul class="helplist">
+      <li><b>Absent / not playing:</b> tap a name on the Teams tab. <b>Late arrival:</b> tap their name again, or use “＋ Add student”.</li>
+      <li><b>Swap or move:</b> tap a name, then tap someone on another team (or “Move here”). <b>Lock</b> keeps a student on their team through shuffles.</li>
+      <li><b>Split by level</b> sends Competitive and Casual students to separate groups, each with its own number of teams. Tap a name in the Level groups card to move someone.</li>
+      <li><b>Even boys/girls</b> can be switched off if the numbers don’t allow it.</li>
+      <li>Students who list only 1–2 friends aren’t paired with the same person every shuffle. Lists of 3+ always count in full.</li>
+      <li><b>Copy as text</b>, <b>Print</b> (one page) and <b>Projector view</b> are under the teams.</li>
+      <li>Under <i>Students &amp; rules</i> you can fix a student’s gender or strength, and add always-together or keep-apart pairs.</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h2>Troubleshooting</h2>
+    <ul class="helplist">
+      <li><b>“Sports found: none”</b>: the skill grid wasn’t recognised. Check that its rows are the sport names and it isn’t titled with “casual” or “competitive”.</li>
+      <li><b>Friends “not found”</b>: the name differs from the class list. Paste your class list under Students &amp; rules and re-import.</li>
+      <li><b>Students in the wrong class</b>: check the form’s “After section” settings and the Class answers in the Sheet.</li>
+      <li><b>Data missing on another device</b>: each browser keeps its own copy. Import the CSV there, or use Data → Download backup and Restore.</li>
+      <li><b>Everything vanished</b>: clearing browser data or using a private window erases it. Re-import the CSV from your Sheet.</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h2>Privacy</h2>
+    <p class="hint" style="margin:0">Nothing leaves your device. The page is locked so it can’t make network requests, and names are stored only in this browser. “Clear all data” on the Data tab removes everything.</p>
   </div>`;
 }
 
@@ -1210,12 +1301,31 @@ document.addEventListener('click', async e => {
     case 'roster': { const txt = $('#rosterText').value; if (!txt.trim()) return; const r = saveRoster(DB.ui.cls, txt); save(); render();
       toast(`Class list saved: ${r.total} names, ${r.added} new${r.fixed.length ? `, ${r.fixed.length} spellings fixed` : ''}`); break; }
     case 'importtext': { const txt = $('#csvText').value; if (!txt.trim()) return; doImport(txt); break; }
+    case 'samplecsv': {
+      const blob = new Blob([buildSample().lines.join('\n')], {type:'text/csv'});
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'sample-form-responses.csv';
+      document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500); break; }
+    case 'clsadd': { const nm = $('#newClass').value.trim(); if (!nm) return; if (DB.classes.includes(nm)){ toast('That class already exists'); return; }
+      DB.classes.push(nm); ensureClass(); save(); render(); toast(`Added class ${nm}`); break; }
+    case 'clsrename': {
+      const old = el.dataset.c, nm = (prompt(`Rename class “${old}” to:`, old) || '').trim();
+      if (!nm || nm === old) return; if (DB.classes.includes(nm)){ toast('That name is already used'); return; }
+      DB.classes = DB.classes.map(c => c === old ? nm : c); DB.students.forEach(x => { if (x.cls === old) x.cls = nm; });
+      for (const key of ['absent', 'teams']) if (DB[key][old]){ DB[key][nm] = DB[key][old]; delete DB[key][old]; }
+      for (const key of Object.keys(DB.levelMoves)) if (key.startsWith(old + '|')){ DB.levelMoves[nm + key.slice(old.length)] = DB.levelMoves[key]; delete DB.levelMoves[key]; }
+      if (DB.ui.cls === old) DB.ui.cls = nm; save(); render(); toast(`Renamed to ${nm}`); break; }
+    case 'clsdelete': {
+      const c = el.dataset.c, ids = DB.students.filter(x => x.cls === c).map(x => x.id);
+      if (!confirm(`Remove class ${c} and its ${ids.length} students (with their teams, locks and rules)? This cannot be undone.`)) return;
+      ids.forEach(deleteStudent); delete DB.teams[c]; delete DB.absent[c];
+      for (const key of Object.keys(DB.levelMoves)) if (key.startsWith(c + '|')) delete DB.levelMoves[key];
+      DB.classes = DB.classes.filter(x => x !== c); ensureClass(); sel = null; save(); render(); toast(`Removed ${c}`); break; }
     case 'sample': if (!DB.students.length || confirm('Replace ALL current data with sample data?')) loadSample(); break;
     case 'backup': {
       const blob = new Blob([JSON.stringify(DB, null, 1)], {type:'application/json'});
       const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `gym-teams-backup-${new Date().toISOString().slice(0, 10)}.json`;
       document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500); break; }
-    case 'clearall': if (confirm('Delete ALL students, teams, rules and settings from this browser? This cannot be undone.')){ try { localStorage.removeItem(LS_KEY); } catch(e){} DB = freshDB(); reindex(); sel = null; render(); toast('All data cleared'); } break;
+    case 'clearall': if (confirm('Delete ALL students, teams, rules and settings from this browser? This cannot be undone.')){ try { localStorage.removeItem(LS_KEY); } catch(e){} DB = freshDB(); reindex(); ensureClass(); sel = null; render(); toast('All data cleared'); } break;
   }
 });
 document.addEventListener('keydown', e => {
@@ -1237,7 +1347,7 @@ function doImport(text){
   try {
     const r = importCSV(text, DB.ui.cls);
     if (r.sports.length && !r.sports.includes(DB.ui.sport)) DB.ui.sport = r.sports[0];
-    save(); render(); toast(`Imported ${r.rows} responses`);
+    ensureClass(); save(); render(); toast(`Imported ${r.rows} responses`);
   } catch(err){ toast(err.message || 'Could not read that file'); }
 }
 
@@ -1279,7 +1389,7 @@ document.addEventListener('pointerup', e => {
 });
 
 /* ----------------------------- Sample data ------------------------------ */
-function loadSample(){
+function buildSample(){
   // Deterministic pseudo-random so the sample is the same every time
   let seed = 20261124; const R = () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
   const pick = (arr, n) => { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--){ const j = Math.floor(R() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a.slice(0, n); };
@@ -1332,6 +1442,10 @@ function loadSample(){
     if (st[0] === 'Lucy Tan') o.cls = '8b ';
     makeRow('8B', B, st, o);
   });
+  return {lines, A, B};
+}
+function loadSample(){
+  const {lines, A, B} = buildSample();
   DB = freshDB(); reindex();
   saveRoster('8A', A.map(x => x[0]).join('\n'));
   saveRoster('8B', B.map(x => x[0]).join('\n'));
