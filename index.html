@@ -141,6 +141,10 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
 /* Projector mode */
 body.present header, body.present .setup, body.present #attCard, body.present #lvCard, body.present .btn-big, body.present .toolbar, body.present .tfoot, body.present #tab-students, body.present #tab-data, body.present .toggles{display:none!important}
 body.present main{max-width:none;padding:16px 24px 40px}
+.more-tools{margin:36px 0 0;padding-top:14px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:4px 14px;justify-content:center;font-size:13px;color:var(--muted)}
+.more-tools a{color:var(--muted);text-underline-offset:3px}
+.more-tools a:hover{color:var(--accent)}
+body.present .more-tools{display:none}
 body.present .restitle{font-size:34px;text-align:center}
 body.present .grphead{font-size:30px}
 body.present .thead h3{font-size:34px}
@@ -196,6 +200,15 @@ body.present .exitpresent:hover{opacity:1}
   <section id="tab-teams"></section>
   <section id="tab-students"></section>
   <section id="tab-data"></section>
+  <!-- Links to the other tools. A fixed list on purpose: this page makes no network requests.
+       Keep in step with https://gdrutz-blip.github.io/random/tools.json -->
+  <footer class="more-tools no-print">
+    <span>More from Mr. Drutz:</span>
+    <a href="https://gdrutz-blip.github.io/random/" target="_blank" rel="noopener">Class Randomizer</a>
+    <a href="https://gdrutz-blip.github.io/drama-generator/" target="_blank" rel="noopener">Improv Scene Starter</a>
+    <a href="https://gdrutz-blip.github.io/seatingplanner/" target="_blank" rel="noopener">Seating Planner</a>
+    <a href="https://gdrutz-blip.github.io/math-strings/" target="_blank" rel="noopener">Math Strings</a>
+  </footer>
 </main>
 <button class="btn exitpresent" data-act="present">✕ Exit projector view</button>
 <div id="actionbar" class="no-print"></div>
