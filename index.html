@@ -229,7 +229,7 @@ body.present .exitpresent:hover{opacity:1}
    ========================================================================== */
 const LS_KEY = 'gymTeams.v1';
 /* Paste the "make a copy" link of your template Google Form here and the Help tab will show a button for it. */
-const FORM_TEMPLATE_URL = '';
+const FORM_TEMPLATE_URL = 'https://docs.google.com/forms/d/1Gh-Hpe4ZwgIx7AVrFVeim6KahPZvPcHphZdazwrkcmY/copy';
 const OVERALL = 'Overall (average of all sports)';
 const DEFAULT_SPORTS = ['Basketball','Volleyball','Soccer','Floor Hockey','Badminton','Dodgeball','Ultimate Frisbee','Team Handball','Softball','Track & Field','Flag Football','Kickball','Pickleball','Lacrosse','Tchoukball','Capture the Flag'];
 const SPORT_ALIASES = {
@@ -1141,7 +1141,7 @@ function renderHelpTab(){
     <h2>Gym Team Maker: how it works</h2>
     <p class="hint">Students fill in a Google Form once. You download the answers as a CSV, load it here, and make fair teams in seconds. This page makes no network requests, and all names stay in your browser.</p>
     <ol class="helplist">
-      <li><b>Get the form.</b> ${FORM_TEMPLATE_URL ? `<a class="btn primary" style="display:inline-flex;align-items:center;margin:2px 0" href="${esc(FORM_TEMPLATE_URL)}" target="_blank" rel="noopener">Make a copy of the template form</a> and fill in your class lists, or build it yourself from the list below.` : 'Build it from the list below.'}</li>
+      <li><b>Get the form.</b> ${FORM_TEMPLATE_URL ? `<a class="btn primary" style="display:inline-flex;align-items:center;margin:2px 0" href="${esc(FORM_TEMPLATE_URL)}" target="_blank" rel="noopener">Make a copy of the template form</a> and replace the placeholder names with your class lists (if Google says you need access, ask Mr. Drutz to share it with you), or build it yourself from the list below.` : 'Build it from the list below.'}</li>
       <li><b>Send students the form link</b> (Send → link). Ask them to pick 4–6 friends.</li>
       <li><b>Optional but recommended:</b> paste each class list under <i>Students &amp; rules → Class list</i>. Students who skip the form still appear, and misspelled names get matched.</li>
       <li><b>Download the answers.</b> In the form: Responses → Link to Sheets, then in the Sheet File → Download → CSV.</li>
