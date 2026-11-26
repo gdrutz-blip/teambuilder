@@ -35,6 +35,9 @@ Turn on **Split by level** on the Teams tab, then pick how many teams go to **Co
 ## Even boys/girls toggle
 **Even boys/girls** (Teams tab) switches the boy/girl balancing on or off. When on, each team gets at least 2 boys and 2 girls when numbers allow, lowered automatically when fewer are present. When off, gender is ignored.
 
+## Short friend lists
+A student who lists only 1 or 2 friends has their request honoured on about 60% / 85% of shuffles (instead of every time), so they aren't paired with the same person every day. Lists of 3 or more always count in full. The change is the `LIGHT_P` setting in `index.html`.
+
 ## How teams are balanced (in priority order)
 1. Team sizes as even as possible (hard rule).
 2. Teacher "always together" / "keep apart" rules.

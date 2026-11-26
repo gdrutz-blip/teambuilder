@@ -533,12 +533,19 @@ const byName = (a, b) => nameOf(a).localeCompare(nameOf(b));
    sizes (hard) > teacher lock-together / keep-apart (5000) > min 2 boys & 2 girls (1000)
    > even boy/girl spread (300) > strength spread (12 × range²) > friend missed (20)
    > student "not with" (50) > top-player spread (8). Small strength give is allowed for friends. */
-function buildModel(ids, k, sport){
+/* Students who listed only 1-2 friends: on each shuffle their request is honoured with this chance, so they are
+   not paired with the same person every time. Lists of 3+ always count in full. */
+const LIGHT_P = {1:0.6, 2:0.85};
+function buildModel(ids, k, sport, light){
   const n = ids.length, ix = new Map(ids.map((id, i) => [id, i]));
   const P = ids.map(id => SM.get(id));
   const str = P.map(s => strengthOf(s, sport));
   const gen = P.map(gNum);
-  const fr = P.map(s => [...new Set((s.friends || []).map(f => ix.get(f)).filter(x => x !== undefined))]);
+  const fr = P.map(s => {
+    const listed = (s.friends || []).length, p = LIGHT_P[listed];
+    if (light && p !== undefined && Math.random() > p) return [];       // lighter weight for short lists
+    return [...new Set((s.friends || []).map(f => ix.get(f)).filter(x => x !== undefined))];
+  });
   const pw = new Map();
   const addPair = (i, j, w) => { if (i === undefined || j === undefined || i === j) return; const key = i < j ? i + ',' + j : j + ',' + i; pw.set(key, (pw.get(key) || 0) + w); };
   P.forEach((s, i) => (s.avoid || []).forEach(o => addPair(i, ix.get(o), 50)));
@@ -596,7 +603,7 @@ function teamSizes(n, k, pinCount){
 }
 const sigOf = teams => teams.map(t => t.slice().sort().join(',')).sort().join('|');
 function optimize(ids, k, sport, pins, prevTeams){
-  const M = buildModel(ids, k, sport), n = M.n;
+  const M = buildModel(ids, k, sport, true), n = M.n;
   const pinT = new Int32Array(n).fill(-1), pinCount = Array(k).fill(0);
   for (const [id, t] of Object.entries(pins || {})){ const i = M.ix.get(id); if (i !== undefined && t < k){ pinT[i] = t; pinCount[t]++; } }
   const movable = []; for (let i = 0; i < n; i++) if (pinT[i] < 0) movable.push(i);
