@@ -1138,72 +1138,50 @@ function renderDataTab(){
 function renderHelpTab(){
   return `
   <div class="card">
-    <h2>Gym Team Maker: how it works</h2>
-    <p class="hint">Students fill in a Google Form once. You download the answers as a CSV, load it here, and make fair teams in seconds. This page makes no network requests, and all names stay in your browser.</p>
+    <h2>Quick start</h2>
+    <p class="hint">Students fill in a Google Form once. You load their answers here and make fair teams in seconds. Everything stays in your browser; nothing is sent anywhere.</p>
     <ol class="helplist">
-      <li><b>Get the form.</b> ${FORM_TEMPLATE_URL ? `<a class="btn primary" style="display:inline-flex;align-items:center;margin:2px 0" href="${esc(FORM_TEMPLATE_URL)}" target="_blank" rel="noopener">Make a copy of the template form</a> and replace the placeholder names with your class lists (if Google says you need access, ask Mr. Drutz to share it with you), or build it yourself from the list below.` : 'Build it from the list below.'}</li>
-      <li><b>Send students the form link</b> (Send → link). Ask them to pick 4–6 friends.</li>
-      <li><b>Optional but recommended:</b> paste each class list under <i>Students &amp; rules → Class list</i>. Students who skip the form still appear, and misspelled names get matched.</li>
-      <li><b>Download the answers.</b> In the form: Responses → Link to Sheets, then in the Sheet File → Download → CSV.</li>
-      <li><b>Load them</b> under <i>Data → Choose CSV file</i>. Read the “Last import” report for anything that didn’t match.</li>
-      <li><b>Make teams</b> on the Teams tab: pick class, sport and number of teams, tap anyone who’s absent, press Make teams.</li>
+      <li><b>Get the form.</b> ${FORM_TEMPLATE_URL ? `<a class="btn primary" style="display:inline-flex;align-items:center;margin:2px 0" href="${esc(FORM_TEMPLATE_URL)}" target="_blank" rel="noopener">Make a copy of the template form</a> and replace the placeholder names with your students. (If Google says you need access, ask Mr. Drutz to share it.) Or build your own (see below).` : 'Build it using the list below.'}</li>
+      <li><b>Send it to students.</b> Ask them to pick 4–6 friends.</li>
+      <li><b>Download the answers.</b> In the form: Responses → Link to Sheets. In the Sheet: File → Download → CSV.</li>
+      <li><b>Load them</b> under <i>Data → Choose CSV file</i>. Check the “Last import” report for anything that didn’t match.</li>
+      <li><b>Make teams</b> on the Teams tab: pick class, sport and number of teams, tap anyone absent, then press Make teams.</li>
     </ol>
-    <div class="toolbar"><button class="btn" data-act="samplecsv">Download a sample CSV</button><button class="btn" data-act="sample">Try with sample data</button></div>
+    <p class="hint" style="margin-bottom:6px"><b>Not everyone filled it in?</b> Paste your class list (one name per line) under <i>Students &amp; rules → Class list</i>. Students who skipped the form still get placed, as average players, and you can adjust them by hand.</p>
+    <div class="toolbar"><button class="btn" data-act="sample">Try with sample data</button><button class="btn" data-act="samplecsv">Download a sample CSV</button></div>
   </div>
   <div class="card">
-    <h2>Building the form</h2>
-    <p class="hint">The tool finds columns by key words in the question titles, so you can word things your own way as long as the key word is in the title.</p>
-    <table class="sched helptbl"><thead><tr><th>Question</th><th>Type</th><th>Title must contain</th></tr></thead><tbody>
-      <tr><td>Class</td><td>Multiple choice (required)</td><td>“Class” at the start</td></tr>
-      <tr><td>Your name, one per class</td><td>Dropdown (required)</td><td>“name”</td></tr>
-      <tr><td>Friends, one per class</td><td>Checkboxes, “select at most 6”</td><td>“friend”</td></tr>
-      <tr><td>Gender (optional)</td><td>Multiple choice: Boy / Girl / Prefer not to say</td><td>“gender”</td></tr>
-      <tr><td>Skill</td><td>Multiple-choice grid. Rows = sports, columns = <i>1 - New to it, 2, 3 - Okay / Not sure, 4, 5 - Very strong</i></td><td>anything without “casual” / “competitive”</td></tr>
-      <tr><td>Level</td><td>Multiple-choice grid, same sport rows. Columns = <i>Competitive, Casual, Either</i></td><td>“casual” or “competitive”</td></tr>
-      <tr><td>Notes (optional)</td><td>Paragraph</td><td>“anything else”, “note” or “comment”</td></tr>
-    </tbody></table>
-    <h3>One form for several classes</h3>
-    <ol class="helplist">
-      <li>Make <b>Section 1</b> with the Class question (a choice for each class).</li>
-      <li>Add a section per class, each with its own <i>name</i> and <i>friends</i> dropdowns (paste that class’s names, one per line, using “Add options in bulk”).</li>
-      <li><b>Important:</b> on the Class question, click ⋮ → <b>Go to section based on answer</b> and send each class to its own section. At the end of each class section, set “After section” to go to the final <i>About you</i> section. Without this, students pass through every class’s name list.</li>
-      <li>Put Gender, the two grids and the notes box in the final section.</li>
-    </ol>
-    <h3>Tips</h3>
+    <h2>Building your own form</h2>
+    <p class="hint">The tool finds each question by a key word in its title.</p>
     <ul class="helplist">
-      <li>Use the <b>same sport names</b> in both grids, and make sure the list covers every sport you might play (adding one later means re-surveying).</li>
-      <li>Names must be <b>unique within a class</b>. If two students share a first name, use “Sam K” and “Sam T”.</li>
-      <li>Use the same spelling in the form’s dropdowns and in your class list here.</li>
-      <li>Turn on <b>Allow response editing</b> in the form’s settings so students can fix mistakes. If a student submits twice, the latest answer wins.</li>
-      <li>Add a short description at the top of the form: only the teacher sees the answers, they help make fair teams, and “choose 4–6 friends”.</li>
-      <li>Never share your real form or its responses with other teachers. Share a <b>template copy</b> with no responses and fake names.</li>
+      <li><b>Class</b>: multiple choice, one choice per class.</li>
+      <li><b>Your name</b>: dropdown of that class’s names. Names must be unique, so use “Sam K” and “Sam T” if two students share a first name.</li>
+      <li><b>Friends</b>: checkboxes of the same names, “select at most 6”. The title must contain “friend”.</li>
+      <li><b>Gender</b> (optional): Boy / Girl / Prefer not to say.</li>
+      <li><b>Skill</b>: a grid with a row per sport and the columns <i>1 - New to it, 2, 3 - Okay / Not sure, 4, 5 - Very strong</i>.</li>
+      <li><b>Level</b>: a second grid with the same sports and the columns <i>Competitive, Casual, Either</i>. The title must contain “casual” or “competitive”.</li>
+      <li><b>Notes</b> (optional): a paragraph box, e.g. “Anything else your teacher should know?”</li>
+    </ul>
+    <p class="hint"><b>For more than one class:</b> give each class its own section with its own name and friends dropdowns. Then, on the Class question, click ⋮ → <b>Go to section based on answer</b> and send each class to its own section. Set each class section to continue to a final section holding the grids.</p>
+  </div>
+  <div class="card">
+    <h2>Good to know</h2>
+    <ul class="helplist">
+      <li><b>On the Teams tab:</b> tap a name to mark it absent. Tap a name, then another name, to swap players. Lock keeps someone on their team.</li>
+      <li><b>Split by level</b> makes separate Competitive and Casual groups. <b>Even boys/girls</b> can be switched off.</li>
+      <li>Turn on <b>Allow response editing</b> in the form’s settings. If a student submits twice, the latest answer is used.</li>
+      <li>Data is saved in this browser only. To use another device, load the CSV there, or use <i>Data → Download backup</i>.</li>
+      <li>Never share your real form or its answers. Share a template copy with fake names.</li>
     </ul>
   </div>
   <div class="card">
-    <h2>Using it</h2>
+    <h2>If something looks wrong</h2>
     <ul class="helplist">
-      <li><b>Absent / not playing:</b> tap a name on the Teams tab. <b>Late arrival:</b> tap their name again, or use “＋ Add student”.</li>
-      <li><b>Swap or move:</b> tap a name, then tap someone on another team (or “Move here”). <b>Lock</b> keeps a student on their team through shuffles.</li>
-      <li><b>Split by level</b> sends Competitive and Casual students to separate groups, each with its own number of teams. Tap a name in the Level groups card to move someone.</li>
-      <li><b>Even boys/girls</b> can be switched off if the numbers don’t allow it.</li>
-      <li>Students who list only 1–2 friends aren’t paired with the same person every shuffle. Lists of 3+ always count in full.</li>
-      <li><b>Copy as text</b>, <b>Print</b> (one page) and <b>Projector view</b> are under the teams.</li>
-      <li>Under <i>Students &amp; rules</i> you can fix a student’s gender or strength, and add always-together or keep-apart pairs.</li>
+      <li><b>“Sports found: none”</b>: the skill grid wasn’t recognised. Its rows should be the sport names.</li>
+      <li><b>Friends “not found”</b>: spelling differs from the class list. Paste your class list and load the CSV again.</li>
+      <li><b>Students in the wrong class</b>: check the form’s section settings.</li>
+      <li><b>Data gone</b>: clearing browser data or using a private window erases it. Load the CSV again.</li>
     </ul>
-  </div>
-  <div class="card">
-    <h2>Troubleshooting</h2>
-    <ul class="helplist">
-      <li><b>“Sports found: none”</b>: the skill grid wasn’t recognised. Check that its rows are the sport names and it isn’t titled with “casual” or “competitive”.</li>
-      <li><b>Friends “not found”</b>: the name differs from the class list. Paste your class list under Students &amp; rules and re-import.</li>
-      <li><b>Students in the wrong class</b>: check the form’s “After section” settings and the Class answers in the Sheet.</li>
-      <li><b>Data missing on another device</b>: each browser keeps its own copy. Import the CSV there, or use Data → Download backup and Restore.</li>
-      <li><b>Everything vanished</b>: clearing browser data or using a private window erases it. Re-import the CSV from your Sheet.</li>
-    </ul>
-  </div>
-  <div class="card">
-    <h2>Privacy</h2>
-    <p class="hint" style="margin:0">Nothing leaves your device. The page is locked so it can’t make network requests, and names are stored only in this browser. “Clear all data” on the Data tab removes everything.</p>
   </div>`;
 }
 
